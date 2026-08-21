@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabaseCamino as supabase } from '../../services/supabaseCamino';
+import CaminoKitVisualBlock from './CaminoKitVisualBlock';
 
 const styles = `
 :root{
@@ -236,9 +237,10 @@ const BLOQUES = [
     desc: 'Logos, sellos del Templario y plantillas de portada listas para tus miniaturas y videos.',
     imagen: `${BUCKET}/sorteos-assets/logo-minimalista.png`,
     imagenModo: 'contain',
-    badge: 'PRÓXIMAMENTE',
-    cta: 'EN CAMINO',
+    badge: null,
+    cta: 'VER KIT →',
     ruta: null,
+    modal: true,
   },
   {
     id: 'tutoriales',
@@ -257,6 +259,7 @@ export default function CaminoParticipanteArmeriaPage() {
   const navigate = useNavigate();
   const [estrellas, setEstrellas] = useState([]);
   const [orbes, setOrbes] = useState([]);
+  const [mostrarKitVisual, setMostrarKitVisual] = useState(false);
 
   useEffect(() => {
     const n = window.innerWidth < 760 ? 26 : 50;
@@ -306,6 +309,7 @@ export default function CaminoParticipanteArmeriaPage() {
   }
 
   function abrirBloque(bloque) {
+    if (bloque.modal) { setMostrarKitVisual(true); return; }
     if (!bloque.ruta) return;
     navigate(bloque.ruta);
   }
@@ -422,6 +426,24 @@ export default function CaminoParticipanteArmeriaPage() {
           Kit Visual y Tutoriales llegan pronto — el Generador de Guiones y el Checklist ya están listos para usarse hoy.
         </div>
       </div>
+
+      {mostrarKitVisual && (
+        <div
+          onClick={() => setMostrarKitVisual(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 998,
+            background: 'rgba(5,3,12,0.85)', backdropFilter: 'blur(6px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4vw',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '640px', width: '100%', maxHeight: '85vh', overflowY: 'auto' }}
+          >
+            <CaminoKitVisualBlock />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
