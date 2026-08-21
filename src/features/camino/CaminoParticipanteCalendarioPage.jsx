@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import CaminoVideoPlayer from "./CaminoVideoPlayer";
+import CaminoTutorialPlayer from "./CaminoTutorialPlayer";
 
 // =====================================================================
 // CalendarioCaminoPage.jsx
@@ -111,10 +112,6 @@ function DayCard({ day, badge, format, desc, detalle }) {
       <div className="day-format">{format}</div>
       <div className="day-desc">{desc}</div>
       <CaminoVideoPlayer diaNumero={day} />
-      <div className="tutorial-btn">
-        <span>▶ VER TUTORIAL</span>
-        <span>↗</span>
-      </div>
 
       {detalle && (
         <>
@@ -594,11 +591,12 @@ const CSS = `
   display:flex; align-items:center; gap:5px;
 }
 .calendario-camino-page .tutorial-btn{
-  margin-top:2px; display:flex; align-items:center; justify-content:space-between; gap:8px;
+  margin-top:2px; width:100%; display:flex; align-items:center; justify-content:space-between; gap:8px;
   font-family:'Cinzel',serif; font-weight:900; font-size:11.5px; letter-spacing:0.4px; color:var(--gold-bright);
   background:rgba(212,175,55,0.08); border:1px solid var(--gold-dim); border-radius:9px; padding:9px 12px;
-  opacity:0.55;
+  cursor:pointer; transition:background .2s, opacity .2s; opacity:0.9;
 }
+.calendario-camino-page .tutorial-btn:hover{opacity:1; background:rgba(212,175,55,0.14);}
 .calendario-camino-page .idea-btn{
   margin-top:2px; width:100%; display:flex; align-items:center; justify-content:space-between; gap:8px;
   font-family:'Cinzel',serif; font-weight:900; font-size:11.5px; letter-spacing:0.4px; color:var(--purple);
