@@ -269,6 +269,7 @@ export default function CalendarioCaminoPage() {
           <button className="nav-item" onClick={() => navigate('/camino/participante/panel')}>Check-in</button>
           <span className="nav-item active">Calendario</span>
           <button className="nav-item" onClick={() => navigate('/camino/participante/pasaporte')}>Pasaporte del Templario</button>
+          <button className="nav-item" onClick={() => navigate('/camino/participante/armeria')}>Armería</button>
           <button className="nav-item" onClick={() => navigate('/camino/participante/ranking')}>Ranking</button>
         </div>
         <select className="nav-select">

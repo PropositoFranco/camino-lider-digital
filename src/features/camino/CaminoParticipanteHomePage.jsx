@@ -153,8 +153,8 @@ const NAV_ITEMS = [
   { label: 'Check-in', activo: false, disponible: true, ruta: '/camino/participante/panel' },
   { label: 'Calendario', activo: false, disponible: true, ruta: '/camino/participante/calendario' },
   { label: 'Pasaporte del Templario', activo: false, disponible: true, ruta: '/camino/participante/pasaporte' },
-  { label: 'Armería', activo: false, disponible: false },
-{ label: 'Ranking', activo: false, disponible: true, ruta: '/camino/participante/ranking' },
+  { label: 'Armería', activo: false, disponible: true, ruta: '/camino/participante/armeria' },
+  { label: 'Ranking', activo: false, disponible: true, ruta: '/camino/participante/ranking' },
 ];
 
 export default function CaminoParticipanteHomePage() {

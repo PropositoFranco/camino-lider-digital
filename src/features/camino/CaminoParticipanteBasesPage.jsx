@@ -72,6 +72,7 @@ export default function CaminoParticipanteBasesPage() {
           <button className="nav-item" onClick={() => navigate('/camino/participante/panel')}>Check-in</button>
           <button className="nav-item" onClick={() => navigate('/camino/participante/calendario')}>Calendario</button>
           <button className="nav-item" onClick={() => navigate('/camino/participante/pasaporte')}>Pasaporte del Templario</button>
+          <button className="nav-item" onClick={() => navigate('/camino/participante/armeria')}>Armería</button>
           <span className="nav-item" style={{ opacity: 0.4, cursor: 'default' }}>Sala de Cowork</span>
           <span className="nav-item" style={{ opacity: 0.4, cursor: 'default' }}>Ranking</span>
         </div>

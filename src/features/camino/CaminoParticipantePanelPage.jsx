@@ -239,7 +239,7 @@ const NAV_ITEMS = [
   { label: 'Check-in', activo: true, disponible: true },
   { label: 'Calendario', activo: false, disponible: true, ruta: '/camino/participante/calendario' },
   { label: 'Pasaporte del Templario', activo: false, disponible: true, ruta: '/camino/participante/pasaporte' },
-  
+  { label: 'Armería', activo: false, disponible: true, ruta: '/camino/participante/armeria' },
   { label: 'Ranking', activo: false, disponible: true, ruta: '/camino/participante/ranking' },
 ];
 
