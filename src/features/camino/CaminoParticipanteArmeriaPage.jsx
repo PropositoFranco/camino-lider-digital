@@ -139,17 +139,20 @@ h1.car-title{font-family:'Cinzel Decorative',serif; font-weight:900; font-size:c
 .car-card.bloqueada:hover{ transform:none; box-shadow:none; border-color:var(--gold-dim); }
 
 .car-card-media{
-  position:relative; width:100%; aspect-ratio:16/8; overflow:hidden; flex-shrink:0;
+  position:relative; width:100%; aspect-ratio:16/8; flex-shrink:0;
+}
+.car-card-media-inner{
+  position:absolute; inset:0; overflow:hidden; border-radius:16px 16px 0 0;
   background:linear-gradient(150deg, rgba(212,175,55,0.1), rgba(204,68,255,0.08));
 }
-.car-card-media img{
+.car-card-media-inner img{
   position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
   filter:brightness(0.72) saturate(1.1);
   transition:transform .3s ease;
 }
-.car-card:hover .car-card-media img{ transform:scale(1.05); }
-.car-card-media.contain img{ object-fit:contain; padding:14%; filter:none; }
-.car-card-media::after{
+.car-card:hover .car-card-media-inner img{ transform:scale(1.05); }
+.car-card-media-inner.contain img{ object-fit:contain; padding:14%; filter:none; }
+.car-card-media-inner::after{
   content:""; position:absolute; inset:0;
   background:linear-gradient(180deg, rgba(4,2,14,0) 40%, rgba(4,2,14,0.88) 100%);
 }
@@ -399,8 +402,10 @@ export default function CaminoParticipanteArmeriaPage() {
               className={`car-card${b.ruta ? '' : ' bloqueada'}`}
               onClick={() => abrirBloque(b)}
             >
-              <div className={`car-card-media${b.imagenModo === 'contain' ? ' contain' : ''}`}>
-                <img src={b.imagen} alt={b.titulo} />
+              <div className="car-card-media">
+                <div className={`car-card-media-inner${b.imagenModo === 'contain' ? ' contain' : ''}`}>
+                  <img src={b.imagen} alt={b.titulo} />
+                </div>
                 {b.badge && <span className="car-card-badge">{b.badge}</span>}
                 <div className="car-card-icon-float">{b.icono}</div>
               </div>
