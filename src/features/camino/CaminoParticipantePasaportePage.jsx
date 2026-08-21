@@ -514,8 +514,6 @@ export default function CaminoParticipantePasaportePage() {
                       className="cpp-stamp-img"
                       src={info.imagen}
                       alt={info.nombre}
-                      width={200}
-                      height={200}
                       loading={num <= 4 ? 'eager' : 'lazy'}
                       decoding="async"
                       fetchpriority={num <= 2 ? 'high' : 'auto'}
