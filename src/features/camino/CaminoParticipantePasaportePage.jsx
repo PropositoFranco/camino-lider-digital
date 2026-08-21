@@ -277,7 +277,7 @@ const TOTAL_SELLOS = 8;
 // imagen: usamos el endpoint de transformación de Supabase (render/image) en vez de object/public,
 // para que sirva una versión ya comprimida y redimensionada (300px, calidad 70) en lugar del PNG original pesado.
 const SELLO_IMG_BASE = 'https://hdwzhwuhlrtrmhnecypm.supabase.co/storage/v1/render/image/public/banners/sellos';
-const SELLO_IMG_PARAMS = '?width=300&quality=70';
+const SELLO_IMG_PARAMS = '?width=300&height=300&resize=contain&quality=70';
 const STAGE_INFO = {
   1: { nombre: 'El Llamado',            logro: 'Diste el primer paso. El Templo empieza a reconocerte.',    icono: '🕯️', imagen: `${SELLO_IMG_BASE}/sello-1.png${SELLO_IMG_PARAMS}` },
   2: { nombre: 'El Primer Voto',        logro: 'Confirmaste tu compromiso con la constancia.',              icono: '📜', imagen: `${SELLO_IMG_BASE}/sello-2.png${SELLO_IMG_PARAMS}` },
