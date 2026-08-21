@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import CaminoVideoPlayer from "./CaminoVideoPlayer";
 import CaminoTutorialPlayer from "./CaminoTutorialPlayer";
+import CaminoGuionModal from "./CaminoGuionModal";
 
 // =====================================================================
 // CalendarioCaminoPage.jsx
@@ -100,6 +101,7 @@ function PlayIcon() {
 function DayCard({ day, badge, format, desc, detalle }) {
   const meta = BADGE_META[badge];
   const [abierto, setAbierto] = useState(false);
+  const [guionAbierto, setGuionAbierto] = useState(false);
 
   return (
     <div className="day-card">
@@ -112,6 +114,18 @@ function DayCard({ day, badge, format, desc, detalle }) {
       <div className="day-format">{format}</div>
       <div className="day-desc">{desc}</div>
       <CaminoVideoPlayer diaNumero={day} />
+
+      <button
+        type="button"
+        className="idea-btn"
+        onClick={() => setGuionAbierto(true)}
+      >
+        <span>🪄 Generar Guion con IA</span>
+      </button>
+
+      {guionAbierto && (
+        <CaminoGuionModal formato={format} onClose={() => setGuionAbierto(false)} />
+      )}
 
       {detalle && (
         <>
