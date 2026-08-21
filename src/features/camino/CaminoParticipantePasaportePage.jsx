@@ -274,16 +274,19 @@ h1.cpp-title{
 const TOTAL_SELLOS = 8;
 
 // ✏️ EDITA AQUÍ: nombre, mensaje de logro, ícono y (cuando la tengas) la foto de cada sello.
-// imagen: null → usa el ícono/emoji. Cuando subas tu PNG a public/sellos/, cambia null por la ruta, ej: '/sellos/sello-1.png'
+// imagen: usamos el endpoint de transformación de Supabase (render/image) en vez de object/public,
+// para que sirva una versión ya comprimida y redimensionada (300px, calidad 70) en lugar del PNG original pesado.
+const SELLO_IMG_BASE = 'https://hdwzhwuhlrtrmhnecypm.supabase.co/storage/v1/render/image/public/banners/sellos';
+const SELLO_IMG_PARAMS = '?width=300&quality=70';
 const STAGE_INFO = {
-  1: { nombre: 'El Llamado',            logro: 'Diste el primer paso. El Templo empieza a reconocerte.',    icono: '🕯️', imagen: 'https://hdwzhwuhlrtrmhnecypm.supabase.co/storage/v1/object/public/banners/sellos/sello-1.png' },
-  2: { nombre: 'El Primer Voto',        logro: 'Confirmaste tu compromiso con la constancia.',              icono: '📜', imagen: 'https://hdwzhwuhlrtrmhnecypm.supabase.co/storage/v1/object/public/banners/sellos/sello-2.png' },
-  3: { nombre: 'La Disciplina',         logro: 'Ya no es motivación, es hábito. Vas construyendo tu ritmo.', icono: '⚔️', imagen: 'https://hdwzhwuhlrtrmhnecypm.supabase.co/storage/v1/object/public/banners/sellos/sello-3.png' },
-  4: { nombre: 'El Escudo Validado',    logro: 'Etapa validada por tu líder. Vas a la mitad del Camino.',   icono: '🛡️', imagen: 'https://hdwzhwuhlrtrmhnecypm.supabase.co/storage/v1/object/public/banners/sellos/sello-4.png', milestone: true },
-  5: { nombre: 'El Temple',             logro: 'Superaste la mitad — aquí muchos flaquean, tú no.',          icono: '🔥', imagen: 'https://hdwzhwuhlrtrmhnecypm.supabase.co/storage/v1/object/public/banners/sellos/sello-5.png' },
-  6: { nombre: 'La Estrategia',         logro: 'Ya piensas como líder, no solo como participante.',          icono: '🧭', imagen: 'https://hdwzhwuhlrtrmhnecypm.supabase.co/storage/v1/object/public/banners/sellos/sello-6.png' },
-  7: { nombre: 'La Antesala',           logro: 'Un paso más y cierras tu Camino completo.',                  icono: '🗝️', imagen: 'https://hdwzhwuhlrtrmhnecypm.supabase.co/storage/v1/object/public/banners/sellos/sello-7.png' },
-  8: { nombre: 'El Templario Completo', logro: '¡Cerraste tu Camino! Los 8 sellos son tuyos.',               icono: '👑', imagen: 'https://hdwzhwuhlrtrmhnecypm.supabase.co/storage/v1/object/public/banners/sellos/sello-8-opcion-B.png', milestone: true },
+  1: { nombre: 'El Llamado',            logro: 'Diste el primer paso. El Templo empieza a reconocerte.',    icono: '🕯️', imagen: `${SELLO_IMG_BASE}/sello-1.png${SELLO_IMG_PARAMS}` },
+  2: { nombre: 'El Primer Voto',        logro: 'Confirmaste tu compromiso con la constancia.',              icono: '📜', imagen: `${SELLO_IMG_BASE}/sello-2.png${SELLO_IMG_PARAMS}` },
+  3: { nombre: 'La Disciplina',         logro: 'Ya no es motivación, es hábito. Vas construyendo tu ritmo.', icono: '⚔️', imagen: `${SELLO_IMG_BASE}/sello-3.png${SELLO_IMG_PARAMS}` },
+  4: { nombre: 'El Escudo Validado',    logro: 'Etapa validada por tu líder. Vas a la mitad del Camino.',   icono: '🛡️', imagen: `${SELLO_IMG_BASE}/sello-4.png${SELLO_IMG_PARAMS}`, milestone: true },
+  5: { nombre: 'El Temple',             logro: 'Superaste la mitad — aquí muchos flaquean, tú no.',          icono: '🔥', imagen: `${SELLO_IMG_BASE}/sello-5.png${SELLO_IMG_PARAMS}` },
+  6: { nombre: 'La Estrategia',         logro: 'Ya piensas como líder, no solo como participante.',          icono: '🧭', imagen: `${SELLO_IMG_BASE}/sello-6.png${SELLO_IMG_PARAMS}` },
+  7: { nombre: 'La Antesala',           logro: 'Un paso más y cierras tu Camino completo.',                  icono: '🗝️', imagen: `${SELLO_IMG_BASE}/sello-7.png${SELLO_IMG_PARAMS}` },
+  8: { nombre: 'El Templario Completo', logro: '¡Cerraste tu Camino! Los 8 sellos son tuyos.',               icono: '👑', imagen: `${SELLO_IMG_BASE}/sello-8-opcion-B.png${SELLO_IMG_PARAMS}`, milestone: true },
 };
 
 function formatFecha(iso) {
@@ -300,7 +303,7 @@ function Medallion({ info, obtenido, siguiente, extraClass = '' }) {
     <div className={clase}>
       <div className="cpp-medallion-cara">
         {obtenido && info.imagen ? (
-          <img src={info.imagen} alt={info.nombre} />
+          <img src={info.imagen} alt={info.nombre} decoding="async" />
         ) : (
           <span className="cpp-medallion-icono">
             {obtenido ? (info.icono || '🎖️') : siguiente ? (info.icono || '🔒') : '🔒'}
@@ -507,7 +510,16 @@ export default function CaminoParticipantePasaportePage() {
               >
                 <div className="cpp-stamp-media">
                   {info.imagen ? (
-                    <img className="cpp-stamp-img" src={info.imagen} alt={info.nombre} />
+                    <img
+                      className="cpp-stamp-img"
+                      src={info.imagen}
+                      alt={info.nombre}
+                      width={200}
+                      height={200}
+                      loading={num <= 4 ? 'eager' : 'lazy'}
+                      decoding="async"
+                      fetchpriority={num <= 2 ? 'high' : 'auto'}
+                    />
                   ) : (
                     <div className="cpp-stamp-fallback">
                       {obtenido ? (info.icono || '🎖️') : esSiguiente ? (info.icono || '🔒') : '🔒'}
