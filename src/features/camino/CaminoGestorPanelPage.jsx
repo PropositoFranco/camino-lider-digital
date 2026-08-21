@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
+import CaminoVideoUploader from './CaminoVideoUploader';
 
 const styles = `
 :root{
@@ -25,6 +26,8 @@ const styles = `
 .cgp-modal-caja{background:var(--card); border:1.5px solid var(--borderHi); border-radius:20px; padding:32px 28px; text-align:center; max-width:340px; width:90%;}
 .cgp-modal-cerrar{margin-top:16px; background:none; border:none; color:var(--muted); font-family:'Cinzel',serif; font-size:9px; cursor:pointer; letter-spacing:1px;}
 .cgp-root input[type=date]{background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:8px; padding:6px 10px; color:var(--text); font-family:'Cinzel',serif; font-size:11px;}
+.cgp-root select{color-scheme:dark;}
+.cgp-root select option{background:#150d28; color:#f0eaff;}
 `;
 
 function copiar(texto) { navigator.clipboard?.writeText(texto).catch(() => {}); }
@@ -39,6 +42,7 @@ export default function CaminoGestorPanelPage() {
   const [modalCodigo, setModalCodigo] = useState(null);
   const [modalInvite, setModalInvite] = useState(null);
   const [invitando, setInvitando] = useState(false);
+  const [diaSeleccionado, setDiaSeleccionado] = useState(1);
 
   const BASE_URL = window.location.origin;
 
@@ -193,6 +197,23 @@ export default function CaminoGestorPanelPage() {
               </div>
             );
           })}
+        </div>
+
+        <div className="cgp-tarjeta">
+          <h2 className="cgp-titulo-tarjeta">🎬 VIDEOS DEL CALENDARIO</h2>
+          <p style={{ color: 'var(--muted)', fontSize: 11.5, marginBottom: 16 }}>
+            Elige el día y sube el video — se transcodifica solo en Bunny y aparece en el Calendario del participante en cuanto termina.
+          </p>
+          <select
+            value={diaSeleccionado}
+            onChange={(e) => setDiaSeleccionado(Number(e.target.value))}
+            style={{ marginBottom: 14, background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', color: 'var(--text)', fontFamily: "'Cinzel',serif", fontSize: 11, colorScheme: 'dark' }}
+          >
+            {Array.from({ length: 28 }, (_, i) => i + 1).map((n) => (
+              <option key={n} value={n}>Día {n}</option>
+            ))}
+          </select>
+          <CaminoVideoUploader diaNumero={diaSeleccionado} />
         </div>
 
         <div className="cgp-tarjeta" style={{ background: 'rgba(155,89,255,0.05)', border: '1px solid rgba(155,89,255,0.2)' }}>

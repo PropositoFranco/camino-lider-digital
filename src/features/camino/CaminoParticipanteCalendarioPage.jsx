@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import CaminoVideoPlayer from "./CaminoVideoPlayer";
 
 // =====================================================================
 // CalendarioCaminoPage.jsx
@@ -107,12 +108,7 @@ function DayCard({ day, badge, format, desc }) {
       </div>
       <div className="day-format">{format}</div>
       <div className="day-desc">{desc}</div>
-      <div className="day-thumb pending">
-        <div className="play-btn">
-          <PlayIcon />
-        </div>
-        <div className="thumb-pending-label">🔒 Miniatura se genera al subir el video</div>
-      </div>
+      <CaminoVideoPlayer diaNumero={day} />
       <div className="tutorial-btn">
         <span>▶ VER TUTORIAL</span>
         <span>↗</span>
