@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabaseCamino as supabase } from '../../services/supabaseCamino';
+import CaminoChecklistPrepublicacion from './CaminoChecklistPrepublicacion';
 
 const styles = `
 :root{
@@ -283,6 +284,7 @@ export default function CaminoParticipantePanelPage() {
   const [enviando, setEnviando] = useState(false);
   const [msgOk, setMsgOk] = useState('');
   const [msgError, setMsgError] = useState('');
+  const [checklistCompleto, setChecklistCompleto] = useState(false);
 
   async function cargar() {
     const { data: sessionData } = await supabase.auth.getSession();
@@ -435,6 +437,11 @@ export default function CaminoParticipantePanelPage() {
       </div>
 
       <div className="ctp-wrap">
+        <CaminoChecklistPrepublicacion
+          diaNumero={diaActual}
+          onCompletoChange={setChecklistCompleto}
+        />
+
         <div className="ctp-card">
           <div className="ctp-section-label">Registrar evidencia de hoy</div>
           <p className="ctp-help-text">
@@ -468,8 +475,8 @@ export default function CaminoParticipantePanelPage() {
               onChange={(e) => setLinkPost(e.target.value)}
             />
           </div>
-          <button className="ctp-btn" disabled={enviando} onClick={enviarCheckin}>
-            {enviando ? 'REGISTRANDO...' : 'REGISTRAR EVIDENCIA'}
+          <button className="ctp-btn" disabled={enviando || !checklistCompleto} onClick={enviarCheckin}>
+            {enviando ? 'REGISTRANDO...' : checklistCompleto ? 'REGISTRAR EVIDENCIA' : 'COMPLETA EL CHECKLIST DE ARRIBA'}
           </button>
           {msgOk && <p className="ctp-msg-ok">{msgOk}</p>}
           {msgError && <p className="ctp-msg-error">{msgError}</p>}
