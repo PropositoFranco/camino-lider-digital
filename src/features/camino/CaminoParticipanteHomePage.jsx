@@ -194,8 +194,8 @@ export default function CaminoParticipanteHomePage() {
       return;
     }
 
-    const { data: perfilSocial, error: errPerfilSocial } = await supabase.rpc('camino_mi_perfil_social');
-    if (!errPerfilSocial && (!perfilSocial || perfilSocial.length === 0)) {
+    const { data: onbEstado, error: errOnb } = await supabase.rpc('camino_mi_estado_onboarding');
+    if (!errOnb && (!onbEstado || onbEstado.length === 0 || !onbEstado[0].modulo1_confirmado)) {
       navigate('/camino/participante/onboarding', { replace: true });
       return;
     }
