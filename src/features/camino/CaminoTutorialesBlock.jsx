@@ -140,6 +140,18 @@ function ChecklistDemo({ tutorial }) {
         );
       })}
       <p className="ctb-checklist-hint">Toca cada paso conforme lo intentes ✦</p>
+
+      
+        href="mailto:soyfrancocontupotencial@gmail.com?subject=Ayuda%20con%20mi%20check-in&body=Hola%20Franco%2C%20sigo%20sin%20poder%20hacer%20mi%20check-in.%20Esto%20es%20lo%20que%20pasa%3A%20"
+        className="ctb-sos"
+      >
+        <span className="ctb-sos-icon">✉️</span>
+        <span className="ctb-sos-text">
+          <span className="ctb-sos-title">¿Sigue sin funcionar?</span>
+          <span className="ctb-sos-sub">Escríbeme directo y lo resolvemos juntos</span>
+        </span>
+        <span className="ctb-sos-arrow">→</span>
+      </a>
     </div>
   );
 }
@@ -341,6 +353,46 @@ export default function CaminoTutorialesBlock() {
           text-align: center; font-family: 'Cinzel', serif; letter-spacing: 0.06em; text-transform: uppercase;
           font-size: 0.68rem; color: var(--lilac-dim, rgba(200,185,240,0.42)); margin-top: 0.4rem;
         }
+
+        .ctb-sos {
+          display: flex; align-items: center; gap: 0.9rem;
+          margin-top: 1.25rem;
+          padding: 1rem 1.1rem;
+          border-radius: 1rem;
+          border: 1px solid var(--gold, #D4AF37);
+          background: linear-gradient(135deg, rgba(212,175,55,0.12), rgba(204,68,255,0.08));
+          text-decoration: none;
+          animation: ctb-sos-glow 3s ease-in-out infinite;
+          transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+        .ctb-sos:hover { transform: translateY(-0.15rem); border-color: var(--gold-bright, #FFE566); }
+        .ctb-sos:active { transform: scale(0.98); }
+        @keyframes ctb-sos-glow {
+          0%, 100% { box-shadow: 0 0 0.4rem rgba(212,175,55,0.15); }
+          50% { box-shadow: 0 0 1.4rem rgba(212,175,55,0.4); }
+        }
+        .ctb-sos-icon {
+          flex-shrink: 0;
+          width: 2.6rem; height: 2.6rem; border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 1.3rem;
+          background: var(--gold-bright, #FFE566);
+          box-shadow: 0 0 0.8rem var(--gold-glow, rgba(212,175,55,0.5));
+        }
+        .ctb-sos-text { flex: 1; display: flex; flex-direction: column; gap: 0.15rem; }
+        .ctb-sos-title {
+          font-family: 'Cinzel', serif; font-weight: 900; font-size: clamp(0.85rem, 1.6vw, 0.95rem);
+          color: var(--gold-bright, #FFE566);
+        }
+        .ctb-sos-sub {
+          font-family: 'Crimson Text', serif; font-size: clamp(0.75rem, 1.4vw, 0.85rem);
+          color: var(--lilac, rgba(200,185,240,0.68));
+        }
+        .ctb-sos-arrow {
+          font-size: 1.3rem; color: var(--gold-bright, #FFE566);
+          transition: transform 0.2s ease;
+        }
+        .ctb-sos:hover .ctb-sos-arrow { transform: translateX(0.3rem); }
       `}</style>
     </div>
   );
