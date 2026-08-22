@@ -44,12 +44,34 @@ const styles = `
 .cfm-block-text{
   font-family:'Crimson Text',serif; font-size:14px; line-height:1.65; color:rgba(255,255,255,0.9); margin:0;
 }
-.cfm-ref-link{
-  display:inline-flex; align-items:center; gap:6px; margin-top:8px;
-  font-family:'Cinzel',serif; font-weight:900; font-size:11.5px; letter-spacing:0.4px;
-  color:#FFE566; text-decoration:none;
+.cfm-block-ref{
+  background:linear-gradient(135deg, rgba(238,42,123,0.07), rgba(98,40,215,0.07));
+  border:1px solid rgba(238,42,123,0.3);
 }
-.cfm-ref-link:hover{ text-decoration:underline; }
+.cfm-ref-btn{
+  display:flex; align-items:center; justify-content:center; gap:9px;
+  width:100%; margin-top:10px; padding:15px 18px; border-radius:12px; border:none; cursor:pointer;
+  background:linear-gradient(135deg, #f9ce34 0%, #ee2a7b 45%, #6228d7 100%);
+  background-size:160% 160%; background-position:0% 50%;
+  color:#fff; font-family:'Cinzel',serif; font-weight:900; font-size:12.5px; letter-spacing:0.7px;
+  text-decoration:none; text-align:center;
+  box-shadow:0 6px 20px rgba(238,42,123,0.38), 0 0 0 1px rgba(255,255,255,0.1) inset;
+  transition:transform .18s ease, box-shadow .18s ease, background-position .35s ease;
+  animation:cfm-ref-glow 2.4s ease-in-out infinite;
+}
+.cfm-ref-btn:hover{
+  transform:translateY(-2px) scale(1.02);
+  background-position:100% 50%;
+  box-shadow:0 10px 30px rgba(238,42,123,0.55), 0 0 0 1px rgba(255,255,255,0.18) inset;
+}
+.cfm-ref-btn:active{ transform:translateY(0) scale(0.97); }
+.cfm-ref-btn-icon{ font-size:16px; display:flex; }
+.cfm-ref-btn-arrow{ font-size:14px; transition:transform .18s ease; }
+.cfm-ref-btn:hover .cfm-ref-btn-arrow{ transform:translate(3px,-3px); }
+@keyframes cfm-ref-glow{
+  0%, 100%{ box-shadow:0 6px 20px rgba(238,42,123,0.38), 0 0 0 1px rgba(255,255,255,0.1) inset; }
+  50%{ box-shadow:0 6px 26px rgba(238,42,123,0.55), 0 0 0 1px rgba(255,255,255,0.16) inset; }
+}
 
 .cfm-divider{
   display:flex; align-items:center; gap:10px; margin:22px 0 14px;
@@ -126,15 +148,17 @@ export default function CaminoFichaModal({ ficha, diaNumero, onClose }) {
             </div>
 
             {ficha.referencia_url && (
-              <div className="cfm-block">
+              <div className="cfm-block cfm-block-ref">
                 <div className="cfm-block-label">👀 La referencia: así se ve hecho</div>
                 <a
-                  className="cfm-ref-link"
+                  className="cfm-ref-btn"
                   href={ficha.referencia_url}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  ▶ Abrir la referencia en Instagram ↗
+                  <span className="cfm-ref-btn-icon">▶</span>
+                  Abrir la referencia en Instagram
+                  <span className="cfm-ref-btn-arrow">↗</span>
                 </a>
               </div>
             )}
