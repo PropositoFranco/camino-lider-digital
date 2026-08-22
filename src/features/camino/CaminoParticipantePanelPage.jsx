@@ -315,19 +315,30 @@ export default function CaminoParticipantePanelPage() {
     }
 
     setEnviando(true);
-    const { error } = await supabase.rpc('camino_registrar_checkin', {
+    const { data: checkinId, error } = await supabase.rpc('camino_registrar_checkin', {
       p_dia_numero: participante.dia_actual,
       p_formato: formato,
       p_plataforma: plataforma,
       p_video_url: null,
       p_link_post: linkPost.trim(),
     });
-    setEnviando(false);
 
     if (error) {
+      setEnviando(false);
       setMsgError('No se pudo registrar tu evidencia. Intenta de nuevo.');
       return;
     }
+
+    await supabase.from('camino_checklist_respuestas').upsert({
+      participante_id: participante.participante_id,
+      checkin_id: checkinId,
+      gancho: true,
+      estructura: true,
+      legibilidad: true,
+      cta: true,
+    }, { onConflict: 'checkin_id' });
+
+    setEnviando(false);
     setMsgOk('¡Evidencia registrada! Sigue así, Templario.');
     setLinkPost('');
   }

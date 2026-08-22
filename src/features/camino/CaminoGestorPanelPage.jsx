@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import CaminoVideoUploader from './CaminoVideoUploader';
+import CaminoGestorMetricasBlock from './CaminoGestorMetricasBlock';
 
 const styles = `
 :root{
@@ -155,6 +156,11 @@ export default function CaminoGestorPanelPage() {
           <button className="cgp-btn-invitar" disabled={invitando} onClick={generarInvitacion}>
             {invitando ? 'GENERANDO...' : '+ INVITAR NUEVO GESTOR'}
           </button>
+        </div>
+
+        <div className="cgp-tarjeta">
+          <h2 className="cgp-titulo-tarjeta">📊 MÉTRICAS DE TU EQUIPO</h2>
+          <CaminoGestorMetricasBlock />
         </div>
 
         <div className="cgp-tarjeta">
