@@ -233,7 +233,7 @@ function construirBrief({ formato, diaNumero, detalle, temasSeleccionados, audie
     if (detalle.contenido) brief += `\n· Contenido/desarrollo de referencia:\n${detalle.contenido}\n`;
     if (detalle.estructura) brief += `\n· Estructura de referencia:\n${detalle.estructura}\n`;
   }
-  brief += "\n---\nInstrucción final: usa este brief como contexto de marca y arma el guion con los temas elegidos, en el formato del día — no repitas literalmente el ejemplo de referencia, solo imita su tono y estructura.\n";
+  brief += "\n---\nInstrucción final: usa este brief y el Módulo 1 (Los 3 Pilares de tu Marca) que también te compartieron como contexto de marca, y arma el guion con los temas elegidos, en el formato del día — no repitas literalmente el ejemplo de referencia, solo imita su tono y estructura.\n";
   return brief;
 }
 
@@ -418,8 +418,8 @@ export default function CaminoGuionModal({ formato, diaNumero, detalle, onClose 
               <div className="cgm-step">
                 <div className="cgm-step-num">3</div>
                 <div className="cgm-step-body">
-                  <div className="cgm-step-title">Abre tu IA y sube el Brief</div>
-                  <div className="cgm-step-desc">Entra a ChatGPT, Gemini o Claude (la que ya uses) y arrastra ahí el archivo que descargaste en el paso 2.</div>
+                  <div className="cgm-step-title">Abre tu IA y sube el Brief + tu Módulo 1</div>
+                  <div className="cgm-step-desc">Entra a ChatGPT, Gemini o Claude (la que ya uses) y arrastra ahí <b>dos</b> archivos: el que descargaste en el paso 2, y tu <b>Módulo 1 (Los 3 Pilares)</b> ya lleno — lo tienes descargado desde Armería. Sin ese segundo archivo, tu guion sale genérico, no con tu voz.</div>
                 </div>
               </div>
 
