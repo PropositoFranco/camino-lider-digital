@@ -263,6 +263,19 @@ const BLOQUES = [
     ruta: null,
     modal: true,
   },
+  {
+    id: 'modulo1',
+    icono: '📜',
+    titulo: 'Módulo 1 — Los 3 Pilares',
+    desc: 'Tu documento base de marca personal. Descárgalo las veces que necesites, aunque ya lo hayas confirmado.',
+    imagen: `${BUCKET}/banners/sellos/sello-3.png`,
+    imagenModo: 'contain',
+    badge: null,
+    cta: 'DESCARGAR →',
+    ruta: null,
+    externo: true,
+    url: `${BUCKET}/camino-recursos/modulo1/Modulo1_Los3Pilares.docx`,
+  },
 ];
 
 export default function CaminoParticipanteArmeriaPage() {
@@ -322,6 +335,7 @@ export default function CaminoParticipanteArmeriaPage() {
   function abrirBloque(bloque) {
     if (bloque.id === 'tutoriales') { setMostrarTutoriales(true); return; }
     if (bloque.modal) { setMostrarKitVisual(true); return; }
+    if (bloque.externo && bloque.url) { window.open(bloque.url, '_blank', 'noopener'); return; }
     if (!bloque.ruta) return;
     navigate(bloque.ruta);
   }
@@ -415,7 +429,7 @@ export default function CaminoParticipanteArmeriaPage() {
           {BLOQUES.map((b) => (
             <div
               key={b.id}
-              className={`car-card${b.ruta ? '' : ' bloqueada'}`}
+              className={`car-card${(b.ruta || b.externo) ? '' : ' bloqueada'}`}
               onClick={() => abrirBloque(b)}
             >
               <div className="car-card-media">
