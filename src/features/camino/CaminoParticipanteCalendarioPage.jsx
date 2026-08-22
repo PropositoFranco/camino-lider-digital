@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import CaminoVideoPlayer from "./CaminoVideoPlayer";
 import CaminoTutorialPlayer from "./CaminoTutorialPlayer";
 import CaminoGuionModal from "./CaminoGuionModal";
+import CaminoFichaModal from "./CaminoFichaModal";
+import { supabaseCamino as supabase } from "../../services/supabaseCamino";
 
 // =====================================================================
 // CalendarioCaminoPage.jsx
@@ -98,10 +100,11 @@ function PlayIcon() {
   );
 }
 
-function DayCard({ day, badge, format, desc, detalle }) {
+function DayCard({ day, badge, format, desc, detalle, ficha }) {
   const meta = BADGE_META[badge];
   const [abierto, setAbierto] = useState(false);
   const [guionAbierto, setGuionAbierto] = useState(false);
+  const [fichaAbierta, setFichaAbierta] = useState(false);
 
   return (
     <div className="day-card">
@@ -113,6 +116,29 @@ function DayCard({ day, badge, format, desc, detalle }) {
       </div>
       <div className="day-format">{format}</div>
       <div className="day-desc">{desc}</div>
+
+      {ficha && (
+        <div className="ref-ficha-row">
+          {ficha.referencia_url && (
+            <a
+              className="ref-btn"
+              href={ficha.referencia_url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              ▶ Ver referencia
+            </a>
+          )}
+          <button type="button" className="ficha-btn" onClick={() => setFichaAbierta(true)}>
+            📄 Ver la ficha del formato
+          </button>
+        </div>
+      )}
+
+      {fichaAbierta && (
+        <CaminoFichaModal ficha={ficha} diaNumero={day} onClose={() => setFichaAbierta(false)} />
+      )}
+
       <CaminoVideoPlayer diaNumero={day} />
 
       <button
@@ -190,6 +216,34 @@ function LockedWeek({ title }) {
 
 export default function CalendarioCaminoPage() {
   const navigate = useNavigate();
+  const [fichasPorDia, setFichasPorDia] = useState({});
+
+  // Carga las fichas de formato (referencia, hooks, contenido) y los
+  // formatos, y las junta en un mapa { [dia_numero]: {...ficha, formato} }
+  useEffect(() => {
+    let activo = true;
+    async function cargarFichas() {
+      const [{ data: fichas, error: errFichas }, { data: formatos, error: errFormatos }] =
+        await Promise.all([
+          supabase.from("camino_calendario_fichas").select("*"),
+          supabase.from("camino_formatos_ficha").select("*"),
+        ]);
+      if (!activo) return;
+      if (errFichas || errFormatos) {
+        console.error("Error cargando fichas del calendario:", errFichas || errFormatos);
+        return;
+      }
+      const formatosPorId = Object.fromEntries((formatos || []).map((f) => [f.id, f]));
+      const mapa = {};
+      (fichas || []).forEach((f) => {
+        mapa[f.dia_numero] = { ...f, formato: formatosPorId[f.formato_ficha_id] || null };
+      });
+      setFichasPorDia(mapa);
+    }
+    cargarFichas();
+    return () => { activo = false; };
+  }, []);
+
   // Genera las estrellas del fondo, igual que el <script> del HTML original
   const stars = useMemo(() => {
     const n = typeof window !== "undefined" && window.innerWidth < 760 ? 40 : 80;
@@ -324,7 +378,7 @@ export default function CalendarioCaminoPage() {
               {week.days.map((d, idx) => (
                 <div className={`cc-timeline-row ${idx % 2 === 0 ? "left" : "right"}`} key={d.day}>
                   <div className="cc-timeline-node">{d.day}</div>
-                  <DayCard {...d} />
+                  <DayCard {...d} ficha={fichasPorDia[d.day]} />
                 </div>
               ))}
             </div>
@@ -633,6 +687,24 @@ const CSS = `
 .calendario-camino-page .idea-text{
   font-family:'Crimson Text',serif; font-size:13.5px; line-height:1.6; color:rgba(255,255,255,0.88); margin:0;
 }
+
+.calendario-camino-page .ref-ficha-row{
+  display:flex; gap:8px; flex-wrap:wrap; margin-top:2px;
+}
+.calendario-camino-page .ref-btn, .calendario-camino-page .ficha-btn{
+  flex:1; min-width:140px; display:flex; align-items:center; justify-content:center; gap:6px;
+  font-family:'Cinzel',serif; font-weight:900; font-size:11px; letter-spacing:0.4px;
+  border-radius:9px; padding:9px 10px; cursor:pointer; text-decoration:none; text-align:center;
+  transition:background .2s, opacity .2s; opacity:0.9; border:none;
+}
+.calendario-camino-page .ref-btn{
+  color:var(--gold-bright); background:rgba(212,175,55,0.08); border:1px solid var(--gold-dim);
+}
+.calendario-camino-page .ref-btn:hover{opacity:1; background:rgba(212,175,55,0.14);}
+.calendario-camino-page .ficha-btn{
+  color:#8ecbff; background:rgba(94,166,255,0.08); border:1px solid rgba(94,166,255,0.35);
+}
+.calendario-camino-page .ficha-btn:hover{opacity:1; background:rgba(94,166,255,0.14);}
 
 .calendario-camino-page .locked-week{
   background:rgba(255,255,255,0.02); border:1px dashed var(--gold-dim); border-radius:14px;

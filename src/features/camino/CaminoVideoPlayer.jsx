@@ -4,6 +4,12 @@
 // Reproductor para el participante, en la tarjeta de cada día del
 // Calendario del Camino. Apunta a la Video Library INDEPENDIENTE del
 // Camino (733285) — nunca a la 673293 de Academia.
+//
+// A partir de esta versión, un día puede ser:
+//   - tipo_contenido = 'video'       -> reproduce el video de Bunny (igual que antes)
+//   - tipo_contenido = 'redireccion' -> el contenido vive fuera (ej. una publicación
+//                                       de Instagram) y se muestra una tarjeta que
+//                                       invita a abrirlo en una pestaña nueva.
 
 import { supabaseCamino } from '../../services/supabaseCamino';
 import { useState, useEffect } from 'react';
@@ -27,7 +33,7 @@ export default function CaminoVideoPlayer({ diaNumero }) {
     const cargar = async () => {
       const { data } = await supabaseCamino
         .from('camino_calendario_videos')
-        .select('video_id, video_estado, titulo')
+        .select('video_id, video_estado, titulo, tipo_contenido, enlace_externo')
         .eq('dia_numero', diaNumero)
         .maybeSingle();
 
@@ -65,6 +71,36 @@ export default function CaminoVideoPlayer({ diaNumero }) {
     );
   }
 
+  const esRedireccion = fila?.tipo_contenido === 'redireccion';
+
+  // ── Tarjeta de redireccionamiento (ej. publicación de Instagram) ──
+  if (esRedireccion && fila.enlace_externo) {
+    return (
+      <a
+        href={fila.enlace_externo}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={estilos.marcoRedireccion}
+      >
+        <style>{`
+          @keyframes caminoGlow { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+          .camino-redir-sello { animation: caminoGlow 2.6s ease-in-out infinite; }
+          .camino-redir-card:hover .camino-redir-boton { background: rgba(212,175,55,0.22) !important; border-color: rgba(212,175,55,0.6) !important; }
+        `}</style>
+        <div className="camino-redir-card" style={estilos.redireccionContenido}>
+          <div className="camino-redir-sello" style={estilos.redireccionSello}>◈</div>
+          <p style={estilos.redireccionEyebrow}>Contenido especial del día</p>
+          <h4 style={estilos.redireccionTitulo}>{fila.titulo || 'Publicación del Camino'}</h4>
+          <div className="camino-redir-boton" style={estilos.redireccionBoton}>
+            Ver publicación en Instagram
+            <span style={{ fontSize: '13px' }}>↗</span>
+          </div>
+        </div>
+      </a>
+    );
+  }
+
+  // ── Video normal de Bunny ──
   const estado = fila?.video_estado || 'sin_video';
   const listoParaVer = estado === 'listo' || estado === 'reproducible';
 
@@ -134,5 +170,70 @@ const estilos = {
     background: 'linear-gradient(90deg, #0a0614 25%, #150d28 50%, #0a0614 75%)',
     backgroundSize: '200% 100%',
     animation: 'caminoPulso 1.4s infinite',
+  },
+
+  // ── Estilos de la tarjeta de redireccionamiento ──
+  marcoRedireccion: {
+    position: 'relative',
+    width: '100%',
+    aspectRatio: '16 / 9',
+    borderRadius: '14px',
+    overflow: 'hidden',
+    display: 'block',
+    textDecoration: 'none',
+    background:
+      'radial-gradient(circle at 20% 15%, rgba(155,89,255,0.28), transparent 55%), ' +
+      'radial-gradient(circle at 85% 90%, rgba(212,175,55,0.20), transparent 55%), ' +
+      '#0e0818',
+    border: '1px solid rgba(212, 175, 55, 0.3)',
+    cursor: 'pointer',
+  },
+  redireccionContenido: {
+    position: 'absolute',
+    inset: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    padding: '20px',
+    textAlign: 'center',
+  },
+  redireccionSello: {
+    fontSize: '30px',
+    color: '#D4AF37',
+    textShadow: '0 0 18px rgba(212,175,55,0.65)',
+  },
+  redireccionEyebrow: {
+    fontFamily: "'Cinzel', serif",
+    fontWeight: 700,
+    fontSize: '10px',
+    letterSpacing: '2px',
+    textTransform: 'uppercase',
+    color: '#9b59ff',
+    margin: 0,
+  },
+  redireccionTitulo: {
+    fontFamily: "'Cinzel', serif",
+    fontWeight: 900,
+    fontSize: '17px',
+    color: '#f0eaff',
+    margin: '2px 0 6px',
+    maxWidth: '320px',
+  },
+  redireccionBoton: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '10px 18px',
+    borderRadius: '10px',
+    background: 'rgba(212,175,55,0.12)',
+    border: '1px solid rgba(212,175,55,0.4)',
+    color: '#FFE566',
+    fontFamily: "'Cinzel', serif",
+    fontWeight: 700,
+    fontSize: '11px',
+    letterSpacing: '1px',
+    transition: 'background .15s ease, border-color .15s ease',
   },
 };
