@@ -435,7 +435,7 @@ export default function CaminoParticipanteArmeriaPage() {
         </div>
 
         <div className="car-footer-note">
-          Kit Visual y Tutoriales llegan pronto — el Generador de Guiones y el Checklist ya están listos para usarse hoy.
+          Tu arsenal está completo — toca cualquier tarjeta y úsala hoy mismo.
         </div>
       </div>
 
