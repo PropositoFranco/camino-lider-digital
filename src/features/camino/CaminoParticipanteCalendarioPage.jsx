@@ -100,6 +100,72 @@ function PlayIcon() {
   );
 }
 
+// Convierte el texto plano de "estructura" en algo legible, detectando el
+// patrón que ya trae cada día (no inventa ni reordena nada, solo lo separa):
+//  - "Slide N (Título): texto..." repetido  -> tarjetas numeradas
+//  - "paso 1 → paso 2 → paso 3"             -> flujo de pasos vertical
+//  - cualquier otro caso                     -> párrafo normal (como hoy)
+function parseEstructura(texto) {
+  if (!texto) return { tipo: "plano", items: [] };
+
+  if (/Slide\s*\d+/.test(texto)) {
+    const partes = texto
+      .split(/(?=Slide\s*\d+)/g)
+      .map((p) => p.trim())
+      .filter(Boolean);
+    if (partes.length > 1) {
+      const slides = partes.map((parte, i) => {
+        const m = parte.match(/^Slide\s*(\d+(?:-\d+)?)\s*\(?([^):]*)\)?:?\s*(.*)$/s);
+        if (!m) return { numero: i + 1, titulo: "", texto: parte };
+        return { numero: m[1], titulo: m[2].trim(), texto: m[3].trim() };
+      });
+      return { tipo: "slides", items: slides };
+    }
+  }
+
+  if (texto.includes("→")) {
+    const pasos = texto.split("→").map((p) => p.trim()).filter(Boolean);
+    if (pasos.length > 1) return { tipo: "flujo", items: pasos };
+  }
+
+  return { tipo: "plano", items: [texto] };
+}
+
+function EstructuraRender({ texto }) {
+  const est = parseEstructura(texto);
+
+  if (est.tipo === "slides") {
+    return (
+      <div className="idea-slides">
+        {est.items.map((s, i) => (
+          <div className="idea-slide" key={i}>
+            <div className="idea-slide-num">{s.numero}</div>
+            <div className="idea-slide-body">
+              {s.titulo && <div className="idea-slide-title">{s.titulo}</div>}
+              <p className="idea-text">{s.texto}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (est.tipo === "flujo") {
+    return (
+      <div className="idea-flow">
+        {est.items.map((paso, i) => (
+          <div className="idea-flow-step" key={i}>
+            <span className="idea-flow-dot">{i + 1}</span>
+            <span className="idea-flow-text">{paso}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return <p className="idea-text">{texto}</p>;
+}
+
 function DayCard({ day, badge, format, desc, detalle, ficha }) {
   const meta = BADGE_META[badge];
   const [abierto, setAbierto] = useState(false);
@@ -169,26 +235,26 @@ function DayCard({ day, badge, format, desc, detalle, ficha }) {
             <div className="idea-panel">
               {detalle.hookTextual && (
                 <div className="idea-block">
-                  <div className="idea-label">Hook textual</div>
+                  <div className="idea-label">📝 Hook textual</div>
                   <p className="idea-text">{detalle.hookTextual}</p>
                 </div>
               )}
               {detalle.hookVisual && (
                 <div className="idea-block">
-                  <div className="idea-label">Hook visual</div>
+                  <div className="idea-label">📝 Hook visual</div>
                   <p className="idea-text">{detalle.hookVisual}</p>
                 </div>
               )}
               {detalle.contenido && (
                 <div className="idea-block">
-                  <div className="idea-label">Contenido</div>
+                  <div className="idea-label">🎬 Contenido</div>
                   <p className="idea-text">{detalle.contenido}</p>
                 </div>
               )}
               {detalle.estructura && (
-                <div className="idea-block">
-                  <div className="idea-label">Estructura</div>
-                  <p className="idea-text">{detalle.estructura}</p>
+                <div className="idea-block idea-block-estructura">
+                  <div className="idea-label">📐 Estructura, paso a paso</div>
+                  <EstructuraRender texto={detalle.estructura} />
                 </div>
               )}
             </div>
@@ -685,7 +751,42 @@ const CSS = `
   text-transform:uppercase; margin-bottom:4px;
 }
 .calendario-camino-page .idea-text{
-  font-family:'Crimson Text',serif; font-size:13.5px; line-height:1.6; color:rgba(255,255,255,0.88); margin:0;
+  font-family:'Crimson Text',serif; font-size:13.5px; line-height:1.65; color:rgba(255,255,255,0.88); margin:0;
+}
+
+.calendario-camino-page .idea-block-estructura{
+  background:linear-gradient(135deg, rgba(212,175,55,0.05), rgba(204,68,255,0.05));
+}
+
+.calendario-camino-page .idea-slides{ display:flex; flex-direction:column; gap:10px; margin-top:6px; }
+.calendario-camino-page .idea-slide{
+  display:flex; gap:12px; align-items:flex-start;
+  background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.18); border-radius:10px;
+  padding:10px 12px;
+}
+.calendario-camino-page .idea-slide-num{
+  flex:0 0 auto; width:24px; height:24px; border-radius:50%;
+  background:rgba(212,175,55,0.14); border:1px solid var(--gold-dim);
+  color:var(--gold-bright); font-family:'Cinzel',serif; font-weight:900; font-size:11px;
+  display:flex; align-items:center; justify-content:center;
+}
+.calendario-camino-page .idea-slide-body{ flex:1; min-width:0; }
+.calendario-camino-page .idea-slide-title{
+  font-family:'Cinzel',serif; font-weight:900; font-size:11px; letter-spacing:0.4px;
+  color:#CC9CFF; text-transform:uppercase; margin-bottom:3px;
+}
+.calendario-camino-page .idea-slide-body .idea-text{ margin:0; }
+
+.calendario-camino-page .idea-flow{ display:flex; flex-direction:column; gap:8px; margin-top:6px; }
+.calendario-camino-page .idea-flow-step{ display:flex; align-items:center; gap:10px; }
+.calendario-camino-page .idea-flow-dot{
+  flex:0 0 auto; width:22px; height:22px; border-radius:50%;
+  background:rgba(204,68,255,0.14); border:1px solid rgba(204,68,255,0.4);
+  color:#E3B8FF; font-family:'Cinzel',serif; font-weight:900; font-size:10.5px;
+  display:flex; align-items:center; justify-content:center;
+}
+.calendario-camino-page .idea-flow-text{
+  font-family:'Crimson Text',serif; font-size:13.5px; color:rgba(255,255,255,0.88); line-height:1.5;
 }
 
 .calendario-camino-page .ref-ficha-row{
