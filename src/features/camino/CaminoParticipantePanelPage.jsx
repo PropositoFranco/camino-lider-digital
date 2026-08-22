@@ -329,15 +329,6 @@ export default function CaminoParticipantePanelPage() {
       return;
     }
 
-    await supabase.from('camino_checklist_respuestas').upsert({
-      participante_id: participante.participante_id,
-      checkin_id: checkinId,
-      gancho: true,
-      estructura: true,
-      legibilidad: true,
-      cta: true,
-    }, { onConflict: 'checkin_id' });
-
     setEnviando(false);
     setMsgOk('¡Evidencia registrada! Sigue así, Templario.');
     setLinkPost('');
