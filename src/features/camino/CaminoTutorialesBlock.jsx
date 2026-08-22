@@ -107,6 +107,7 @@ function TutorialDemo({ tutorial }) {
 
 function ChecklistDemo({ tutorial }) {
   const [marcados, setMarcados] = useState(() => tutorial.pasos.map(() => false));
+  const todosMarcados = marcados.every(Boolean);
 
   function toggle(i) {
     setMarcados((prev) => {
@@ -139,19 +140,24 @@ function ChecklistDemo({ tutorial }) {
           </div>
         );
       })}
-      <p className="ctb-checklist-hint">Toca cada paso conforme lo intentes ✦</p>
 
-      
-        href="mailto:soyfrancocontupotencial@gmail.com?subject=Ayuda%20con%20mi%20check-in&body=Hola%20Franco%2C%20sigo%20sin%20poder%20hacer%20mi%20check-in.%20Esto%20es%20lo%20que%20pasa%3A%20"
-        className="ctb-sos"
-      >
-        <span className="ctb-sos-icon">✉️</span>
-        <span className="ctb-sos-text">
-          <span className="ctb-sos-title">¿Sigue sin funcionar?</span>
-          <span className="ctb-sos-sub">Escríbeme directo y lo resolvemos juntos</span>
-        </span>
-        <span className="ctb-sos-arrow">→</span>
-      </a>
+      {!todosMarcados && (
+        <p className="ctb-checklist-hint">Toca cada paso conforme lo intentes ✦</p>
+      )}
+
+      {todosMarcados && (
+        <a
+          href="mailto:soyfrancocontupotencial@gmail.com?subject=Ayuda%20con%20mi%20check-in&body=Hola%20Franco%2C%20sigo%20sin%20poder%20hacer%20mi%20check-in.%20Esto%20es%20lo%20que%20pasa%3A%20"
+          className="ctb-sos"
+        >
+          <span className="ctb-sos-icon">✉️</span>
+          <span className="ctb-sos-text">
+            <span className="ctb-sos-title">¿Ya intentaste todo y sigue fallando?</span>
+            <span className="ctb-sos-sub">Escríbeme directo y lo resolvemos juntos</span>
+          </span>
+          <span className="ctb-sos-arrow">→</span>
+        </a>
+      )}
     </div>
   );
 }
