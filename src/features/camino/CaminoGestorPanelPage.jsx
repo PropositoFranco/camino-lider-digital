@@ -22,6 +22,8 @@ const styles = `
 .cgp-btn-aceptar{padding:8px 14px; background:rgba(68,255,136,0.12); border:1px solid rgba(68,255,136,0.35); border-radius:8px; color:var(--green); font-family:'Cinzel',serif; font-size:9px; letter-spacing:1px; cursor:pointer;}
 .cgp-btn-descartar{padding:8px 14px; background:rgba(255,68,102,0.1); border:1px solid rgba(255,68,102,0.3); border-radius:8px; color:var(--red); font-family:'Cinzel',serif; font-size:9px; letter-spacing:1px; cursor:pointer;}
 .cgp-btn-invitar{padding:10px 18px; background:rgba(155,89,255,0.12); border:1px solid rgba(155,89,255,0.35); border-radius:10px; color:var(--purple); font-family:'Cinzel',serif; font-weight:700; font-size:11px; letter-spacing:1px; cursor:pointer;}
+.cgp-btn-enlace{padding:10px 16px; background:rgba(212,175,55,0.1); border:1px solid var(--border); border-radius:10px; color:var(--gold); font-family:'Cinzel',serif; font-weight:700; font-size:10.5px; letter-spacing:0.8px; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; white-space:nowrap;}
+.cgp-btn-enlace:hover{border-color:var(--borderHi); background:rgba(212,175,55,0.16);}
 .cgp-root button:disabled{opacity:0.5; cursor:default;}
 .cgp-modal-fondo{position:fixed; inset:0; background:rgba(4,2,14,0.88); z-index:9999; display:flex; align-items:center; justify-content:center;}
 .cgp-modal-caja{background:var(--card); border:1.5px solid var(--borderHi); border-radius:20px; padding:32px 28px; text-align:center; max-width:340px; width:90%;}
@@ -153,9 +155,14 @@ export default function CaminoGestorPanelPage() {
               {nombreGestor ? `Hola, ${nombreGestor}` : 'Tu Camino'}
             </h1>
           </div>
-          <button className="cgp-btn-invitar" disabled={invitando} onClick={generarInvitacion}>
-            {invitando ? 'GENERANDO...' : '+ INVITAR NUEVO GESTOR'}
-          </button>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <a href="https://propotienda.com/hub" className="cgp-btn-enlace">🏛️ IR AL HUB</a>
+            <a href="https://propotienda.com/admin" className="cgp-btn-enlace">🔐 IR A ADMIN</a>
+            <a href="https://camino.propotienda.com/camino/participante/pasaporte" className="cgp-btn-enlace">📜 VER PASAPORTE</a>
+            <button className="cgp-btn-invitar" disabled={invitando} onClick={generarInvitacion}>
+              {invitando ? 'GENERANDO...' : '+ INVITAR NUEVO GESTOR'}
+            </button>
+          </div>
         </div>
 
         <div className="cgp-tarjeta">
