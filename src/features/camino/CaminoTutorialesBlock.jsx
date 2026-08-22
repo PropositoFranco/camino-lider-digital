@@ -14,6 +14,28 @@ const TUTORIALES = [
       { texto: '¡Listo! Ya está copiado, pégalo donde lo necesites', cursor: { x: 12, y: 87 } },
     ],
   },
+  {
+    id: 'subtitulos',
+    icono: '💬',
+    titulo: 'Subtítulos automáticos',
+    pasos: [
+      { texto: 'Antes de publicar, busca el botón de "Subtítulos" (ícono CC) en la barra de edición', cursor: { x: 69, y: 83 } },
+      { texto: 'Tócalo — la app los genera solos en unos segundos', cursor: { x: 50, y: 45 } },
+      { texto: 'Revisa que no haya quedado mal escrita alguna palabra y publica normal', cursor: { x: 84, y: 96 } },
+    ],
+  },
+  {
+    id: 'checkin_fallido',
+    icono: '🛠️',
+    titulo: 'Si falla el check-in',
+    tipo: 'checklist',
+    pasos: [
+      { texto: 'Cierra la app o pestaña y vuelve a abrirla' },
+      { texto: 'Revisa tu conexión a internet (wifi o datos)' },
+      { texto: 'Si sigue sin cargar, toca "Volver a intentar"' },
+      { texto: 'Si nada funciona, escribe a tu gestor por WhatsApp con una captura del error' },
+    ],
+  },
 ];
 
 function TutorialDemo({ tutorial }) {
@@ -83,6 +105,21 @@ function TutorialDemo({ tutorial }) {
   );
 }
 
+function ChecklistDemo({ tutorial }) {
+  return (
+    <div className="ctb-checklist">
+      {tutorial.pasos.map((paso, i) => {
+        const esUltimo = i === tutorial.pasos.length - 1;
+        return (
+          <div key={i} className={`ctb-check-item${esUltimo ? ' ctb-check-item--final' : ''}`}>
+            <span className="ctb-check-num">{i + 1}</span>
+            <p className="ctb-check-texto">{paso.texto}</p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 export default function CaminoTutorialesBlock() {
   const [activo, setActivo] = useState(TUTORIALES[0]?.id);
   const tutorial = TUTORIALES.find((t) => t.id === activo);
@@ -110,7 +147,11 @@ export default function CaminoTutorialesBlock() {
         ))}
       </div>
 
-      {tutorial && <TutorialDemo key={tutorial.id} tutorial={tutorial} />}
+      {tutorial && (
+        tutorial.tipo === 'checklist'
+          ? <ChecklistDemo tutorial={tutorial} />
+          : <TutorialDemo key={tutorial.id} tutorial={tutorial} />
+      )}
 
       <style>{`
         .ctb-wrap {
@@ -201,6 +242,33 @@ export default function CaminoTutorialesBlock() {
           font-family: 'Crimson Text', serif; text-align: center;
           color: #f0ead6; font-size: clamp(0.85rem, 1.6vw, 1rem);
           max-width: 22rem; min-height: 2.6em;
+        }
+
+        .ctb-checklist {
+          display: flex; flex-direction: column; gap: 0.75rem;
+          width: 100%; max-width: 26rem; margin: 0 auto;
+        }
+        .ctb-check-item {
+          display: flex; align-items: flex-start; gap: 0.75rem;
+          padding: 0.75rem 1rem;
+          border-radius: 0.85rem;
+          border: 1px solid var(--gold-dim, rgba(212,175,55,0.3));
+          background: rgba(255,255,255,0.03);
+        }
+        .ctb-check-item--final {
+          border-color: var(--gold-bright, #FFE566);
+          background: rgba(255,229,102,0.08);
+        }
+        .ctb-check-num {
+          flex-shrink: 0;
+          width: 1.6rem; height: 1.6rem; border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          font-family: 'Cinzel', serif; font-weight: 900; font-size: 0.8rem;
+          color: #0a0814; background: var(--gold-bright, #FFE566);
+        }
+        .ctb-check-texto {
+          font-family: 'Crimson Text', serif; color: #f0ead6;
+          font-size: clamp(0.85rem, 1.6vw, 1rem); line-height: 1.4; margin: 0;
         }
       `}</style>
     </div>
