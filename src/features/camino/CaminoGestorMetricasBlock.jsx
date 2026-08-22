@@ -4,7 +4,7 @@ import { supabase } from '../../services/supabase';
 const styles = `
 .cgm-root{ display:flex; flex-direction:column; gap:16px; }
 
-.cgm-resumen{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+.cgm-resumen{ display:grid; grid-template-columns:repeat(5,1fr); gap:10px; }
 @media (max-width:700px){ .cgm-resumen{ grid-template-columns:repeat(2,1fr); } }
 .cgm-stat{
   background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:12px;
@@ -41,7 +41,7 @@ const styles = `
 
 .cgm-tabla{ display:flex; flex-direction:column; gap:8px; }
 .cgm-fila-p{
-  display:grid; grid-template-columns:auto 1fr auto auto auto; align-items:center; gap:12px;
+  display:grid; grid-template-columns:auto 1fr auto auto auto auto; align-items:center; gap:12px;
   background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:12px; padding:12px 14px;
   border-left:3px solid var(--muted);
 }
@@ -60,6 +60,15 @@ const styles = `
 .cgm-barra-bg{ width:44px; height:4px; border-radius:4px; background:rgba(255,255,255,0.08); overflow:hidden; margin-top:3px; }
 .cgm-barra-fill{ height:100%; border-radius:4px; background:var(--purple); }
 
+.cgm-p-modulo1{ display:flex; flex-direction:column; align-items:center; gap:2px; min-width:60px; }
+.cgm-badge-modulo1{
+  font-family:'Cinzel',serif; font-size:9px; font-weight:700; letter-spacing:0.4px;
+  padding:4px 9px; border-radius:20px; white-space:nowrap; text-transform:uppercase;
+}
+.cgm-badge-modulo1.confirmado{ background:rgba(68,255,136,0.12); border:1px solid rgba(68,255,136,0.35); color:var(--green); }
+.cgm-badge-modulo1.descargado{ background:rgba(255,196,68,0.1); border:1px solid rgba(255,196,68,0.3); color:#ffc444; }
+.cgm-badge-modulo1.pendiente{ background:rgba(255,68,102,0.1); border:1px solid rgba(255,68,102,0.3); color:var(--red); }
+
 .cgm-vacio{ text-align:center; padding:28px 16px; color:var(--muted); font-size:12.5px; line-height:1.6; }
 .cgm-loading{ text-align:center; padding:24px; color:var(--muted); font-family:'Cinzel',serif; font-size:11px; letter-spacing:1px; }
 `;
@@ -72,6 +81,8 @@ const FILTROS = [
 ];
 
 const ESTADO_ICONO = { al_dia: '🟢', atrasado: '🟡', en_riesgo: '🔴' };
+
+const MODULO1_LABEL = { confirmado: '📜 Listo', descargado: '📜 A medias', pendiente: '📜 Pendiente' };
 
 export default function CaminoGestorMetricasBlock() {
   const [estado, setEstado] = useState('cargando'); // cargando | listo | error
@@ -94,7 +105,8 @@ export default function CaminoGestorMetricasBlock() {
     const alDiaHoy = datos.filter(d => d.dias_sin_checkin <= 1).length;
     const rachaProm = total ? Math.round(datos.reduce((s, d) => s + d.racha_actual, 0) / total) : 0;
     const enRiesgo = datos.filter(d => d.estado === 'en_riesgo').length;
-    return { total, alDiaHoy, rachaProm, enRiesgo };
+    const modulo1Listo = datos.filter(d => d.modulo1_estado === 'confirmado').length;
+    return { total, alDiaHoy, rachaProm, enRiesgo, modulo1Listo };
   }, [datos]);
 
   const tips = useMemo(() => {
@@ -110,6 +122,10 @@ export default function CaminoGestorMetricasBlock() {
     const checklistBajo = datos.filter(d => d.checkins_totales > 0 && d.checklist_pct < 50);
     if (checklistBajo.length > 0) {
       lista.push({ ok: false, icon: '🛡️', texto: `${checklistBajo.length} participantes publican sin completar bien el checklist (gancho/estructura/legibilidad/cta). Vale la pena repasarlo con ellos.` });
+    }
+    const modulo1Pendiente = datos.filter(d => d.modulo1_estado === 'pendiente');
+    if (modulo1Pendiente.length > 0) {
+      lista.push({ ok: false, icon: '📜', texto: `${modulo1Pendiente.length} todavía no llenan su Módulo 1: ${modulo1Pendiente.map(r => r.nombre.split(' ')[0]).join(', ')}. Sin eso, sus guiones no salen personalizados.` });
     }
     if (riesgo.length === 0 && atrasados.length === 0 && datos.length > 0) {
       lista.push({ ok: true, icon: '✅', texto: 'Todo tu equipo está al día. Ningún participante necesita seguimiento urgente ahora mismo.' });
@@ -154,6 +170,10 @@ export default function CaminoGestorMetricasBlock() {
         <div className={`cgm-stat${resumen.enRiesgo > 0 ? ' alerta' : ''}`}>
           <div className="cgm-stat-num">{resumen.enRiesgo}</div>
           <div className="cgm-stat-label">En riesgo</div>
+        </div>
+        <div className="cgm-stat">
+          <div className="cgm-stat-num">{resumen.total ? Math.round((resumen.modulo1Listo / resumen.total) * 100) : 0}%</div>
+          <div className="cgm-stat-label">Módulo 1 listo</div>
         </div>
       </div>
 
@@ -213,6 +233,9 @@ export default function CaminoGestorMetricasBlock() {
             <div className="cgm-p-metric">
               <div className="cgm-p-metric-num">+{p.seguidores_ganados}</div>
               <div className="cgm-p-metric-label">Seguidores</div>
+            </div>
+            <div className="cgm-p-modulo1">
+              <span className={`cgm-badge-modulo1 ${p.modulo1_estado}`}>{MODULO1_LABEL[p.modulo1_estado]}</span>
             </div>
           </div>
         ))}

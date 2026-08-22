@@ -48,14 +48,32 @@ const styles = `
 h1.cob-title{font-family:'Cinzel Decorative',serif; font-weight:900; font-size:clamp(24px,4vh,32px); line-height:1.2; color:#fff; margin-top:4px;}
 .cob-sub{font-family:'Nunito',sans-serif; font-size:14.5px; color:var(--lilac); max-width:480px; line-height:1.6;}
 
+.cob-progress-wrap{ display:flex; flex-direction:column; gap:6px; }
+.cob-progress-track{
+  width:100%; height:8px; border-radius:20px; overflow:hidden;
+  background:rgba(255,255,255,0.06); border:1px solid var(--gold-dim);
+}
+.cob-progress-fill{
+  height:100%; border-radius:20px;
+  background:linear-gradient(90deg, var(--gold), var(--gold-bright));
+  box-shadow:0 0 12px var(--gold-glow);
+  transition:width .5s ease;
+}
+.cob-progress-label{
+  font-family:'Cinzel',serif; font-weight:700; font-size:11px; letter-spacing:0.6px;
+  color:var(--gold-bright); text-align:right;
+}
+
 .cob-steps{ display:flex; flex-direction:column; gap:14px; }
 .cob-step{
   background:var(--dark-surface); border:1px solid var(--gold-dim); border-radius:16px;
   padding:20px 22px; position:relative; overflow:hidden; display:flex; gap:16px; align-items:flex-start;
-  transition:border-color .2s, background .2s;
+  transition:border-color .2s, background .2s, opacity .3s;
 }
 .cob-step::before{content:""; position:absolute; inset:0; background:radial-gradient(ellipse 70% 60% at 0% 0%, rgba(212,175,55,0.08), transparent 70%); pointer-events:none;}
 .cob-step.done{ border-color:var(--gold); background:rgba(212,175,55,0.06); }
+.cob-step.locked{ opacity:0.45; }
+.cob-step.locked .cob-check-row{ pointer-events:none; }
 .cob-step-num{
   flex:0 0 auto; width:34px; height:34px; border-radius:50%;
   background:rgba(212,175,55,0.14); border:1px solid var(--gold);
@@ -63,11 +81,14 @@ h1.cob-title{font-family:'Cinzel Decorative',serif; font-weight:900; font-size:c
   display:flex; align-items:center; justify-content:center; z-index:1;
 }
 .cob-step.done .cob-step-num{ background:var(--gold); color:#1a0d2e; }
+.cob-step.locked .cob-step-num{ background:rgba(200,185,240,0.1); border-color:var(--lilac-dim); color:var(--lilac); }
 .cob-step-body{ flex:1; min-width:0; z-index:1; }
 .cob-step-title{font-family:'Cinzel',serif; font-weight:900; font-size:15.5px; color:#fff; margin-bottom:4px;}
 .cob-step-desc{font-family:'Nunito',sans-serif; font-size:13.5px; color:var(--lilac); line-height:1.55; margin-bottom:12px;}
-
-
+.cob-step-locked-msg{
+  font-family:'Nunito',sans-serif; font-weight:700; font-size:12.5px; color:var(--lilac);
+  display:flex; align-items:center; gap:6px;
+}
 
 .cob-material-item{
   display:flex; align-items:center; justify-content:space-between; gap:12px;
@@ -121,6 +142,7 @@ export default function CaminoParticipanteOnboardingPage() {
   const navigate = useNavigate();
   const [estado, setEstado] = useState('cargando'); // cargando | listo
   const [modulo1Url, setModulo1Url] = useState(null);
+  const [descargado, setDescargado] = useState(false);
   const [confirmado, setConfirmado] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [estrellas, setEstrellas] = useState([]);
@@ -150,9 +172,13 @@ export default function CaminoParticipanteOnboardingPage() {
     }
 
     const { data: onb } = await supabase.rpc('camino_mi_estado_onboarding');
-    if (onb && onb.length > 0 && onb[0].modulo1_confirmado) {
-      navigate('/camino/participante/home', { replace: true });
-      return;
+    if (onb && onb.length > 0) {
+      if (onb[0].modulo1_confirmado) {
+        navigate('/camino/participante/home', { replace: true });
+        return;
+      }
+      // Si ya había descargado antes (ej. recargó la página), respeta ese avance
+      setDescargado(!!onb[0].modulo1_descargado);
     }
 
     const { data: recurso } = await supabase
@@ -169,6 +195,12 @@ export default function CaminoParticipanteOnboardingPage() {
   }
 
   useEffect(() => { cargar(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+
+  function marcarDescargado() {
+    if (descargado) return;
+    setDescargado(true); // optimista, no bloquea al participante
+    supabase.rpc('camino_marcar_modulo1_descargado').catch(() => {});
+  }
 
   async function confirmarYContinuar() {
     if (!confirmado || enviando) return;
@@ -190,6 +222,8 @@ export default function CaminoParticipanteOnboardingPage() {
       </div>
     );
   }
+
+  const progreso = confirmado ? 100 : descargado ? 50 : 0;
 
   return (
     <div className="cob-root">
@@ -214,22 +248,35 @@ export default function CaminoParticipanteOnboardingPage() {
             src="https://hdwzhwuhlrtrmhnecypm.supabase.co/storage/v1/object/public/camino-recursos/maestro-brazos-abiertos.png"
             alt="El Maestro Templario te da la bienvenida"
           />
-          <div className="cob-eyebrow">ANTES DE TU PRIMER DÍA</div>
+          <div className="cob-eyebrow">TU PRIMERA MISIÓN</div>
           <h1 className="cob-title">Bienvenido a tu Camino</h1>
           <p className="cob-sub">
-            Un solo paso separa tu registro de tu primer día real: dejar listo el material
-            que hace que cada guion suene a ti, no a un genérico más.
+            Esto es lo que hace que cada guion suene a ti, no a un genérico más:
+            tu forma de hablar, tu negocio y tu cliente ideal, en un solo lugar.
           </p>
         </div>
 
+        <div className="cob-progress-wrap">
+          <div className="cob-progress-track">
+            <div className="cob-progress-fill" style={{ width: `${progreso}%` }} />
+          </div>
+          <div className="cob-progress-label">{progreso}% completado</div>
+        </div>
+
         <div className="cob-steps">
-          <div className="cob-step done">
+          <div className={`cob-step ${descargado ? 'done' : ''}`}>
             <div className="cob-step-num">1</div>
             <div className="cob-step-body">
               <div className="cob-step-title">Descarga tu Módulo 1</div>
               <div className="cob-step-desc">Tu Porqué, tu forma de hablar, tu negocio y tu avatar — en un solo Word. Llénalo a tu ritmo.</div>
               {modulo1Url ? (
-                <a className="cob-material-item" href={modulo1Url} target="_blank" rel="noopener noreferrer">
+                <a
+                  className="cob-material-item"
+                  href={modulo1Url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={marcarDescargado}
+                >
                   <div className="cob-material-left">
                     <div className="cob-material-icon">📜</div>
                     <div className="cob-material-title">Módulo 1 — Los 3 Pilares de tu Marca</div>
@@ -242,18 +289,24 @@ export default function CaminoParticipanteOnboardingPage() {
             </div>
           </div>
 
-          <div className="cob-step">
+          <div className={`cob-step ${descargado ? '' : 'locked'}`}>
             <div className="cob-step-num">2</div>
             <div className="cob-step-body">
               <div className="cob-step-title">Confirma que ya lo llenaste</div>
-              <div className="cob-step-desc">No lo revisamos ni lo calificamos — es tuyo. Solo nos dices cuándo estás listo.</div>
-              <div
-                className={`cob-check-row ${confirmado ? 'checked' : ''}`}
-                onClick={() => setConfirmado(v => !v)}
-              >
-                <div className="cob-check-box">{confirmado ? '✓' : ''}</div>
-                <div className="cob-check-label">Ya llené mi Módulo 1</div>
-              </div>
+              {descargado ? (
+                <>
+                  <div className="cob-step-desc">No lo revisamos ni lo calificamos — es tuyo. Solo nos dices cuándo estás listo.</div>
+                  <div
+                    className={`cob-check-row ${confirmado ? 'checked' : ''}`}
+                    onClick={() => setConfirmado(v => !v)}
+                  >
+                    <div className="cob-check-box">{confirmado ? '✓' : ''}</div>
+                    <div className="cob-check-label">Ya llené mi Módulo 1</div>
+                  </div>
+                </>
+              ) : (
+                <div className="cob-step-locked-msg">🔒 Primero descarga tu Módulo 1 arriba</div>
+              )}
             </div>
           </div>
         </div>
