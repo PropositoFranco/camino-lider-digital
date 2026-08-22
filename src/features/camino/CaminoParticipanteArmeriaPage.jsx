@@ -152,7 +152,15 @@ h1.car-title{font-family:'Cinzel Decorative',serif; font-weight:900; font-size:c
   transition:transform .3s ease;
 }
 .car-card:hover .car-card-media-inner img{ transform:scale(1.05); }
-.car-card-media-inner.contain img{ object-fit:contain; padding:14%; filter:none; }
+.car-card-media-inner.contain img{
+  object-fit:contain; padding:4%;
+  filter:drop-shadow(0 0 14px rgba(212,175,55,0.4));
+  transition:transform .35s cubic-bezier(.2,.8,.2,1), filter .35s ease;
+}
+.car-card:hover .car-card-media-inner.contain img{
+  transform:scale(1.22) rotate(-1.5deg);
+  filter:drop-shadow(0 0 26px var(--gold-glow)) drop-shadow(0 0 48px rgba(204,68,255,0.45));
+}
 .car-card-media-inner::after{
   content:""; position:absolute; inset:0;
   background:linear-gradient(180deg, rgba(4,2,14,0) 40%, rgba(4,2,14,0.88) 100%);
