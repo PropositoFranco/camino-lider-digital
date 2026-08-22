@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabaseCamino as supabase } from '../../services/supabaseCamino';
 import CaminoKitVisualBlock from './CaminoKitVisualBlock';
+import CaminoTutorialesBlock from './CaminoTutorialesBlock';
 
 const styles = `
 :root{
@@ -257,9 +258,10 @@ const BLOQUES = [
     desc: 'Micro-videos de 30 segundos: cómo sacar tu link público, subtítulos automáticos y más.',
     imagen: `${BUCKET}/banners/sellos/sello-6.png`,
     imagenModo: 'contain',
-    badge: 'PRÓXIMAMENTE',
-    cta: 'EN CAMINO',
+    badge: null,
+    cta: 'VER TUTORIALES →',
     ruta: null,
+    modal: true,
   },
 ];
 
@@ -268,6 +270,7 @@ export default function CaminoParticipanteArmeriaPage() {
   const [estrellas, setEstrellas] = useState([]);
   const [orbes, setOrbes] = useState([]);
   const [mostrarKitVisual, setMostrarKitVisual] = useState(false);
+  const [mostrarTutoriales, setMostrarTutoriales] = useState(false);
 
   useEffect(() => {
     const n = window.innerWidth < 760 ? 26 : 50;
@@ -317,6 +320,7 @@ export default function CaminoParticipanteArmeriaPage() {
   }
 
   function abrirBloque(bloque) {
+    if (bloque.id === 'tutoriales') { setMostrarTutoriales(true); return; }
     if (bloque.modal) { setMostrarKitVisual(true); return; }
     if (!bloque.ruta) return;
     navigate(bloque.ruta);
@@ -449,6 +453,24 @@ export default function CaminoParticipanteArmeriaPage() {
             style={{ maxWidth: '640px', width: '100%', maxHeight: '85vh', overflowY: 'auto' }}
           >
             <CaminoKitVisualBlock />
+          </div>
+        </div>
+      )}
+
+      {mostrarTutoriales && (
+        <div
+          onClick={() => setMostrarTutoriales(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 998,
+            background: 'rgba(5,3,12,0.85)', backdropFilter: 'blur(6px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4vw',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '640px', width: '100%', maxHeight: '85vh', overflowY: 'auto' }}
+          >
+            <CaminoTutorialesBlock />
           </div>
         </div>
       )}
