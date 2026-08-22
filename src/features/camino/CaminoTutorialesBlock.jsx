@@ -9,7 +9,7 @@ const TUTORIALES = [
     icono: '📤',
     titulo: 'Sacar el link público de tu video',
     pasos: [
-      { texto: 'Abre tu video ya publicado y busca el ícono de compartir', cursor: { x: 92, y: 74 } },
+      { texto: 'Abre tu video ya publicado y busca el ícono de compartir', cursor: { x: 95, y: 68 } },
       { texto: 'Toca "Copiar enlace" en el menú que aparece', cursor: { x: 12, y: 87 } },
       { texto: '¡Listo! Ya está copiado, pégalo donde lo necesites', cursor: { x: 12, y: 87 } },
     ],
