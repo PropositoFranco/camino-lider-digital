@@ -6,10 +6,11 @@ import { supabaseCamino } from '../../services/supabaseCamino';
 const CATEGORIA_LABEL = {
   sello: 'Sellos del Templario',
   logo: 'Logos',
+  personaje: 'Maestro Templario',
   banner: 'Plantillas de Portada',
 };
 
-const CATEGORIA_ORDEN = ['sello', 'logo', 'banner'];
+const CATEGORIA_ORDEN = ['sello', 'logo', 'personaje', 'banner'];
 
 export default function CaminoKitVisualBlock() {
   const [recursos, setRecursos] = useState([]);
