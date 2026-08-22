@@ -30,10 +30,10 @@ const TUTORIALES = [
     titulo: 'Si falla el check-in',
     tipo: 'checklist',
     pasos: [
-      { texto: 'Cierra la app o pestaña y vuelve a abrirla' },
-      { texto: 'Revisa tu conexión a internet (wifi o datos)' },
-      { texto: 'Si sigue sin cargar, toca "Volver a intentar"' },
-      { texto: 'Si nada funciona, escribe a tu gestor por WhatsApp con una captura del error' },
+      { texto: 'Cierra la app o pestaña y vuelve a abrirla', icono: '🔄' },
+      { texto: 'Revisa tu conexión a internet (wifi o datos)', icono: '📶' },
+      { texto: 'Si sigue sin cargar, toca "Volver a intentar"', icono: '🔁' },
+      { texto: 'Si nada funciona, escribe a tu gestor por WhatsApp con una captura del error', icono: '💬' },
     ],
   },
 ];
@@ -106,17 +106,40 @@ function TutorialDemo({ tutorial }) {
 }
 
 function ChecklistDemo({ tutorial }) {
+  const [marcados, setMarcados] = useState(() => tutorial.pasos.map(() => false));
+
+  function toggle(i) {
+    setMarcados((prev) => {
+      const next = [...prev];
+      next[i] = !next[i];
+      return next;
+    });
+  }
+
   return (
     <div className="ctb-checklist">
       {tutorial.pasos.map((paso, i) => {
         const esUltimo = i === tutorial.pasos.length - 1;
+        const marcado = marcados[i];
         return (
-          <div key={i} className={`ctb-check-item${esUltimo ? ' ctb-check-item--final' : ''}`}>
-            <span className="ctb-check-num">{i + 1}</span>
+          <div
+            key={i}
+            className={`ctb-check-item${esUltimo ? ' ctb-check-item--final' : ''}${marcado ? ' ctb-check-item--marcado' : ''}`}
+            style={{ animationDelay: `${i * 0.12}s` }}
+            onClick={() => toggle(i)}
+            role="button"
+            tabIndex={0}
+          >
+            {!esUltimo && <span className="ctb-check-line" />}
+            <span className="ctb-check-num">
+              <span className="ctb-check-icono">{paso.icono}</span>
+              <span className="ctb-check-mark">✓</span>
+            </span>
             <p className="ctb-check-texto">{paso.texto}</p>
           </div>
         );
       })}
+      <p className="ctb-checklist-hint">Toca cada paso conforme lo intentes ✦</p>
     </div>
   );
 }
@@ -245,30 +268,78 @@ export default function CaminoTutorialesBlock() {
         }
 
         .ctb-checklist {
-          display: flex; flex-direction: column; gap: 0.75rem;
+          display: flex; flex-direction: column;
           width: 100%; max-width: 26rem; margin: 0 auto;
         }
         .ctb-check-item {
-          display: flex; align-items: flex-start; gap: 0.75rem;
-          padding: 0.75rem 1rem;
+          position: relative;
+          display: flex; align-items: flex-start; gap: 0.85rem;
+          padding: 0.85rem 1rem;
+          margin-bottom: 0.6rem;
           border-radius: 0.85rem;
           border: 1px solid var(--gold-dim, rgba(212,175,55,0.3));
           background: rgba(255,255,255,0.03);
+          cursor: pointer;
+          user-select: none;
+          opacity: 0; transform: translateY(0.6rem);
+          animation: ctb-check-in 0.5s ease forwards;
+          transition: border-color 0.25s ease, background 0.25s ease, transform 0.15s ease;
+        }
+        .ctb-check-item:hover { transform: translateY(-0.1rem); border-color: var(--gold-bright, #FFE566); }
+        .ctb-check-item:active { transform: scale(0.98); }
+        @keyframes ctb-check-in {
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .ctb-check-line {
+          position: absolute; left: 1.85rem; top: 2.6rem; bottom: -0.6rem;
+          width: 2px;
+          background: linear-gradient(180deg, var(--gold-dim, rgba(212,175,55,0.3)), transparent);
+          z-index: 0;
+        }
+        .ctb-check-item--marcado {
+          border-color: rgba(120,255,180,0.5);
+          background: rgba(120,255,180,0.06);
         }
         .ctb-check-item--final {
           border-color: var(--gold-bright, #FFE566);
           background: rgba(255,229,102,0.08);
+          animation: ctb-check-in 0.5s ease forwards, ctb-final-pulse 2.4s ease-in-out infinite 1.2s;
+        }
+        .ctb-check-item--final.ctb-check-item--marcado { animation: ctb-check-in 0.5s ease forwards; }
+        @keyframes ctb-final-pulse {
+          0%, 100% { box-shadow: 0 0 0 rgba(255,229,102,0); }
+          50% { box-shadow: 0 0 1.2rem rgba(255,229,102,0.35); }
         }
         .ctb-check-num {
-          flex-shrink: 0;
-          width: 1.6rem; height: 1.6rem; border-radius: 50%;
+          position: relative; z-index: 1; flex-shrink: 0;
+          width: 2rem; height: 2rem; border-radius: 50%;
           display: flex; align-items: center; justify-content: center;
-          font-family: 'Cinzel', serif; font-weight: 900; font-size: 0.8rem;
-          color: #0a0814; background: var(--gold-bright, #FFE566);
+          font-size: 1rem;
+          background: var(--gold-bright, #FFE566);
+          transition: background 0.25s ease, transform 0.3s ease;
         }
+        .ctb-check-item--marcado .ctb-check-num { background: rgba(120,255,180,0.9); transform: scale(1.08); }
+        .ctb-check-icono { transition: opacity 0.2s ease, transform 0.2s ease; }
+        .ctb-check-mark {
+          position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+          color: #0a0814; font-weight: 900; opacity: 0; transform: scale(0.5);
+          transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        .ctb-check-item--marcado .ctb-check-icono { opacity: 0; transform: scale(0.5); }
+        .ctb-check-item--marcado .ctb-check-mark { opacity: 1; transform: scale(1); }
         .ctb-check-texto {
           font-family: 'Crimson Text', serif; color: #f0ead6;
           font-size: clamp(0.85rem, 1.6vw, 1rem); line-height: 1.4; margin: 0;
+          transition: color 0.25s ease;
+        }
+        .ctb-check-item--marcado .ctb-check-texto {
+          color: rgba(240,234,214,0.55);
+          text-decoration: line-through;
+          text-decoration-color: rgba(120,255,180,0.6);
+        }
+        .ctb-checklist-hint {
+          text-align: center; font-family: 'Cinzel', serif; letter-spacing: 0.06em; text-transform: uppercase;
+          font-size: 0.68rem; color: var(--lilac-dim, rgba(200,185,240,0.42)); margin-top: 0.4rem;
         }
       `}</style>
     </div>
