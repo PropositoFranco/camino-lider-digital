@@ -22,9 +22,6 @@ const styles = `
 .cgl-input:focus{outline:none; border-color:var(--borderHi);}
 .cgl-btn{width:100%; padding:13px 16px; background:rgba(212,175,55,0.12); border:1px solid var(--borderHi); border-radius:10px; color:var(--gold); font-family:'Cinzel',serif; font-weight:700; font-size:11px; letter-spacing:1.5px; cursor:pointer;}
 .cgl-btn:disabled{opacity:0.5; cursor:default;}
-.cgl-btn-secundario{width:100%; padding:12px 16px; background:transparent; border:1px solid rgba(240,234,255,0.22); border-radius:10px; color:var(--muted); font-family:'Nunito',sans-serif; font-weight:700; font-size:12px; cursor:pointer; margin-top:10px;}
-.cgl-btn-secundario:hover{border-color:rgba(240,234,255,0.4); color:var(--text);}
-.cgl-btn-secundario:disabled{opacity:0.5; cursor:default;}
 .cgl-error{color:var(--red); font-size:11.5px; margin-top:12px; line-height:1.5;}
 .cgl-icono{font-size:30px; margin-bottom:10px;}
 .cgl-spinner{width:22px; height:22px; border:2.5px solid var(--border); border-top-color:var(--gold); border-radius:50%; margin:0 auto; animation:cgl-girar 0.8s linear infinite;}
@@ -94,14 +91,6 @@ export default function CaminoGestorLoginPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function reintentarSesion() {
-    setMensajeError('');
-    setPantalla('cargando');
-    // init() revisa localStorage de nuevo; si hay sesión válida te manda
-    // directo al panel, si no, regresa solo a la pantalla de correo.
-    await init();
-  }
-
   async function enviarLink() {
     setMensajeError('');
     if (!correo.trim() || !correo.includes('@')) {
@@ -155,9 +144,6 @@ export default function CaminoGestorLoginPage() {
             />
             <button className="cgl-btn" disabled={enviando} onClick={enviarLink}>
               {enviando ? 'ENVIANDO...' : 'ENVIAR LINK MÁGICO'}
-            </button>
-            <button className="cgl-btn-secundario" disabled={enviando} onClick={reintentarSesion}>
-              ⚡ YA TENGO CUENTA · VERIFICAR SESIÓN
             </button>
             {mensajeError && <p className="cgl-error">{mensajeError}</p>}
           </div>
