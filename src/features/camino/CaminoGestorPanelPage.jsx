@@ -231,10 +231,29 @@ export default function CaminoGestorPanelPage() {
             const borderColor = i.estado === 'aceptado' ? 'rgba(68,255,136,0.3)' : 'rgba(255,255,255,0.1)';
             return (
               <div className="cgp-fila-hist" key={i.id}>
-                <div style={{ fontFamily: "'Cinzel',serif", fontSize: 12, color: 'var(--text)' }}>{i.nombre}</div>
-                <span style={{ fontFamily: "'Cinzel',serif", fontSize: 8, letterSpacing: 1, color, border: `1px solid ${borderColor}`, borderRadius: 20, padding: '3px 10px' }}>
-                  {i.estado === 'aceptado' ? '✓ ACEPTADO' : '○ DESCARTADO'}
-                </span>
+                <div>
+                  <div style={{ fontFamily: "'Cinzel',serif", fontSize: 12, color: 'var(--text)' }}>{i.nombre}</div>
+                  {i.estado === 'aceptado' && i.invite_token && (
+                    <div style={{ fontFamily: "'Cinzel',serif", fontSize: 8, letterSpacing: 0.5, color: 'var(--muted)', marginTop: 3 }}>
+                      {i.invite_usado ? '● ya activó su acceso' : `○ invitación vigente hasta ${new Date(i.invite_expires_at).toLocaleDateString('es-MX')}`}
+                    </div>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  {i.estado === 'aceptado' && i.invite_token && (
+                    <button
+                      className="cgp-btn-aceptar"
+                      onClick={() => setModalCodigo({
+                        nombre: i.nombre,
+                        telefono: i.telefono,
+                        url: `${BASE_URL}/camino/participante/login?invite=${i.invite_token}`,
+                      })}
+                    >🔗 VER LINK</button>
+                  )}
+                  <span style={{ fontFamily: "'Cinzel',serif", fontSize: 8, letterSpacing: 1, color, border: `1px solid ${borderColor}`, borderRadius: 20, padding: '3px 10px' }}>
+                    {i.estado === 'aceptado' ? '✓ ACEPTADO' : '○ DESCARTADO'}
+                  </span>
+                </div>
               </div>
             );
           })}
