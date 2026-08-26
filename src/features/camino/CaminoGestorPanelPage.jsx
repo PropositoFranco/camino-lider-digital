@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import CaminoVideoUploader from './CaminoVideoUploader';
 import CaminoGestorMetricasBlock from './CaminoGestorMetricasBlock';
+import CaminoModoToggle from './CaminoModoToggle';
 
 const styles = `
 :root{
@@ -174,11 +175,14 @@ export default function CaminoGestorPanelPage() {
       <div className="cgp-wrap">
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-          <div>
-            <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 900, fontSize: 10, letterSpacing: 2, color: 'var(--gold)' }}>PANEL DE GESTOR</div>
-            <h1 style={{ fontFamily: "'Cinzel',serif", fontWeight: 900, fontSize: 'clamp(20px,3vw,26px)', color: 'var(--text)', margin: '4px 0 0' }}>
-              {nombreGestor ? `Hola, ${nombreGestor}` : 'Tu Camino'}
-            </h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div>
+              <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 900, fontSize: 10, letterSpacing: 2, color: 'var(--gold)' }}>PANEL DE GESTOR</div>
+              <h1 style={{ fontFamily: "'Cinzel',serif", fontWeight: 900, fontSize: 'clamp(20px,3vw,26px)', color: 'var(--text)', margin: '4px 0 0' }}>
+                {nombreGestor ? `Hola, ${nombreGestor}` : 'Tu Camino'}
+              </h1>
+            </div>
+            <CaminoModoToggle modo="gestor" />
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
             <a href="https://propotienda.com/hub" className="cgp-btn-enlace">🏛️ IR AL HUB</a>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabaseCamino as supabase } from '../../services/supabaseCamino';
+import CaminoModoToggle from './CaminoModoToggle';
 
 const styles = `
 :root{
@@ -275,7 +276,10 @@ export default function CaminoParticipanteHomePage() {
             return <span key={item.label} className={`chh-nav-item ${item.activo ? 'active' : ''}`}>{item.label}</span>;
           })}
         </div>
-        <button className="chh-salir" onClick={salir}>Salir</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <CaminoModoToggle />
+          <button className="chh-salir" onClick={salir}>Salir</button>
+        </div>
       </nav>
 
       <div className="chh-hero">

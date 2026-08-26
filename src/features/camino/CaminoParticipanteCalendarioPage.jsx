@@ -4,6 +4,7 @@ import CaminoVideoPlayer from "./CaminoVideoPlayer";
 import CaminoTutorialPlayer from "./CaminoTutorialPlayer";
 import CaminoGuionModal from "./CaminoGuionModal";
 import CaminoFichaModal from "./CaminoFichaModal";
+import CaminoModoToggle from "./CaminoModoToggle";
 import { supabaseCamino as supabase } from "../../services/supabaseCamino";
 
 // =====================================================================
@@ -392,9 +393,7 @@ export default function CalendarioCaminoPage() {
           <button className="nav-item" onClick={() => navigate('/camino/participante/armeria')}>Armería</button>
           <button className="nav-item" onClick={() => navigate('/camino/participante/ranking')}>Ranking</button>
         </div>
-        <select className="nav-select">
-          <option>Camino a Líder Digital · Gen. Agosto</option>
-        </select>
+        <CaminoModoToggle />
       </nav>
 
       <div className="cc-hero">
