@@ -46,6 +46,11 @@ export default function CaminoGestorPanelPage() {
   const [modalInvite, setModalInvite] = useState(null);
   const [invitando, setInvitando] = useState(false);
   const [diaSeleccionado, setDiaSeleccionado] = useState(1);
+  const [miUid, setMiUid] = useState(null);
+  const [modalAgregar, setModalAgregar] = useState(false);
+  const [nuevoNombre, setNuevoNombre] = useState('');
+  const [nuevoTelefono, setNuevoTelefono] = useState('');
+  const [agregando, setAgregando] = useState(false);
 
   const BASE_URL = window.location.origin;
 
@@ -63,6 +68,7 @@ export default function CaminoGestorPanelPage() {
       return;
     }
     const uid = sessionData.session.user.id;
+    setMiUid(uid);
     const { data: gestor } = await supabase
       .from('camino_gestores')
       .select('nombre, activo')
@@ -103,6 +109,25 @@ export default function CaminoGestorPanelPage() {
   async function descartarInteresado(id) {
     const { error } = await supabase.rpc('descartar_interesado_camino_gestor', { p_interesado_id: id });
     if (error) { alert('No se pudo descartar: ' + error.message); return; }
+    cargarInteresados();
+  }
+
+  async function agregarInteresado() {
+    if (!nuevoNombre.trim()) { alert('Escribe el nombre.'); return; }
+    const soloDigitos = nuevoTelefono.replace(/[^0-9]/g, '');
+    if (!soloDigitos) { alert('Escribe el teléfono.'); return; }
+    const telefonoFinal = soloDigitos.length === 10 ? `52${soloDigitos}` : soloDigitos;
+    setAgregando(true);
+    const { error } = await supabase.from('camino_interesados').insert({
+      nombre: nuevoNombre.trim(),
+      telefono: telefonoFinal,
+      gestor_id: miUid,
+    });
+    setAgregando(false);
+    if (error) { alert('No se pudo agregar: ' + error.message); return; }
+    setNuevoNombre('');
+    setNuevoTelefono('');
+    setModalAgregar(false);
     cargarInteresados();
   }
 
@@ -159,6 +184,9 @@ export default function CaminoGestorPanelPage() {
             <a href="https://propotienda.com/hub" className="cgp-btn-enlace">🏛️ IR AL HUB</a>
             <a href="https://propotienda.com/admin" className="cgp-btn-enlace">🔐 IR A ADMIN</a>
             <a href="https://camino.propotienda.com/camino/participante/pasaporte" className="cgp-btn-enlace">📜 VER PASAPORTE</a>
+            <button className="cgp-btn-invitar" onClick={() => setModalAgregar(true)}>
+              + AGREGAR INTERESADO
+            </button>
             <button className="cgp-btn-invitar" disabled={invitando} onClick={generarInvitacion}>
               {invitando ? 'GENERANDO...' : '+ INVITAR NUEVO GESTOR'}
             </button>
@@ -273,6 +301,37 @@ export default function CaminoGestorPanelPage() {
             </div>
             <div style={{ fontFamily: "'Nunito',sans-serif", fontSize: 10.5, color: 'var(--muted)', marginTop: 14 }}>Válida 14 días, un solo uso.</div>
             <button className="cgp-modal-cerrar" onClick={() => setModalInvite(null)}>CERRAR</button>
+          </div>
+        </div>
+      )}
+
+      {modalAgregar && (
+        <div className="cgp-modal-fondo" onClick={() => setModalAgregar(false)}>
+          <div className="cgp-modal-caja" onClick={(e) => e.stopPropagation()}>
+            <div style={{ fontSize: 28, marginBottom: 8 }}>🤝</div>
+            <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 900, fontSize: 14, color: 'var(--gold)', letterSpacing: 2, marginBottom: 16 }}>NUEVO INTERESADO</div>
+            <input
+              type="text"
+              placeholder="Nombre completo"
+              value={nuevoNombre}
+              onChange={(e) => setNuevoNombre(e.target.value)}
+              style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px', color: 'var(--text)', fontFamily: "'Nunito',sans-serif", fontSize: 13, marginBottom: 12 }}
+            />
+            <input
+              type="tel"
+              placeholder="Teléfono (ej. 8443934803)"
+              value={nuevoTelefono}
+              onChange={(e) => setNuevoTelefono(e.target.value)}
+              style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px', color: 'var(--text)', fontFamily: "'Nunito',sans-serif", fontSize: 13, marginBottom: 16 }}
+            />
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button
+                style={{ padding: '10px 16px', background: 'rgba(68,255,136,0.12)', border: '1px solid rgba(68,255,136,0.35)', borderRadius: 8, color: 'var(--green)', fontFamily: "'Cinzel',serif", fontSize: 9, letterSpacing: 1, cursor: 'pointer' }}
+                disabled={agregando}
+                onClick={agregarInteresado}
+              >{agregando ? 'GUARDANDO...' : '✓ AGREGAR'}</button>
+            </div>
+            <button className="cgp-modal-cerrar" onClick={() => setModalAgregar(false)}>CERRAR</button>
           </div>
         </div>
       )}
