@@ -424,34 +424,10 @@ export default function CaminoParticipanteHomePage() {
     navigate('/camino/participante/login', { replace: true });
   }
 
-  if (estado === 'cargando') {
-    return (
-      <div className="chh-root">
-        <style>{styles}</style>
-        <div className="chh-loading">
-          <div className="chh-spinner"></div>
-          <p style={{ color: 'var(--lilac)', fontFamily: "'Nunito',sans-serif", fontSize: 14 }}>Verificando tu acceso...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (estado === 'sin_acceso') {
-    return (
-      <div className="chh-root">
-        <style>{styles}</style>
-        <div className="chh-loading">
-          <div style={{ fontSize: 32 }}>🔒</div>
-          <h1 className="chh-title" style={{ fontSize: 22 }}>No encontramos tu acceso</h1>
-          <p style={{ color: 'var(--lilac)', fontFamily: "'Nunito',sans-serif", fontSize: 14, maxWidth: 320 }}>
-            Tu cuenta todavía no tiene un acceso activo al Camino. Pide un link de invitación a tu gestor.
-          </p>
-          <button className="chh-btn" onClick={() => navigate('/camino/participante/login')}>IR AL LOGIN</button>
-        </div>
-      </div>
-    );
-  }
-
+  // OJO: todo esto vive ANTES de los `return` de abajo (cargando / sin_acceso)
+  // a propósito — un useEffect nunca puede quedar después de un return
+  // condicional, porque entonces React ejecuta un número distinto de hooks
+  // según el render y truena con el error #310 (pantalla negra).
   const diaActual = participante?.dia_actual ?? 1;
   const diasRegistrados = racha.dias_registrados || [];
   const checkpointsRegistrados = racha.checkpoints_registrados || [];
@@ -481,6 +457,34 @@ export default function CaminoParticipanteHomePage() {
   }, [cpPendiente?.numero]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const cpEsObligatorio = cpPendiente?.numero === 1;
+
+  if (estado === 'cargando') {
+    return (
+      <div className="chh-root">
+        <style>{styles}</style>
+        <div className="chh-loading">
+          <div className="chh-spinner"></div>
+          <p style={{ color: 'var(--lilac)', fontFamily: "'Nunito',sans-serif", fontSize: 14 }}>Verificando tu acceso...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (estado === 'sin_acceso') {
+    return (
+      <div className="chh-root">
+        <style>{styles}</style>
+        <div className="chh-loading">
+          <div style={{ fontSize: 32 }}>🔒</div>
+          <h1 className="chh-title" style={{ fontSize: 22 }}>No encontramos tu acceso</h1>
+          <p style={{ color: 'var(--lilac)', fontFamily: "'Nunito',sans-serif", fontSize: 14, maxWidth: 320 }}>
+            Tu cuenta todavía no tiene un acceso activo al Camino. Pide un link de invitación a tu gestor.
+          </p>
+          <button className="chh-btn" onClick={() => navigate('/camino/participante/login')}>IR AL LOGIN</button>
+        </div>
+      </div>
+    );
+  }
 
   const formatoNombre = fichaHoy?.camino_formatos_ficha?.nombre || fichaHoy?.titulo_dia || '';
   const formatoEmoji = fichaHoy?.camino_formatos_ficha?.emoji || '✨';
