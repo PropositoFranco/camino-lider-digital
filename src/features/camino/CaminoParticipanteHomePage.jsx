@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabaseCamino as supabase } from '../../services/supabaseCamino';
 import CaminoModoToggle from './CaminoModoToggle';
+import CaminoGuionModal from './CaminoGuionModal';
 
 /* ============================================================================
    CONFIG — cosas que TÚ necesitas rellenar/confirmar
@@ -750,32 +751,7 @@ export default function CaminoParticipanteHomePage() {
       )}
 
       {modal === 'guion' && (
-        <div className="chh-modal-overlay" onClick={() => setModal(null)}>
-          <div className="chh-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="chh-modal-head">
-              <div className="chh-modal-title">✨ Generar guion con IA</div>
-              <button className="chh-modal-close" onClick={() => setModal(null)}>✕</button>
-            </div>
-            {promptHoy?.prompt_texto ? (
-              <>
-                <div className="chh-modal-label">Prompt listo para tu nicho</div>
-                <div className="chh-modal-prompt">{rellenarPrompt(promptHoy.prompt_texto, participante?.nicho)}</div>
-                <button
-                  className="chh-btn chh-btn-sm"
-                  onClick={() => navigator.clipboard.writeText(rellenarPrompt(promptHoy.prompt_texto, participante?.nicho))}
-                >
-                  📋 COPIAR PROMPT
-                </button>
-                <p className="chh-modal-nota" style={{ marginTop: 12 }}>
-                  Pega este prompt en tu IA favorita (ChatGPT, Claude, etc.) para recibir tu guion.
-                  La generación automática dentro de la app está pendiente de conectar.
-                </p>
-              </>
-            ) : (
-              <p className="chh-modal-text">Todavía no hay un prompt configurado para este formato.</p>
-            )}
-          </div>
-        </div>
+        <CaminoGuionModal formato={formatoNombre} onClose={() => setModal(null)} />
       )}
 
       {modal === 'checkpoint' && cpPendiente && (
