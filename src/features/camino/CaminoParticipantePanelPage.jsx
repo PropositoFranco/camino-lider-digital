@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabaseCamino as supabase } from '../../services/supabaseCamino';
 
 const styles = `
@@ -24,7 +24,6 @@ const styles = `
 .ctp-star{position:absolute; border-radius:50%; background:#fff; animation:ctp-twinkle var(--d) ease-in-out infinite; animation-delay:var(--del);}
 @keyframes ctp-twinkle{0%,100%{opacity:var(--min);} 50%{opacity:1;}}
 
-/* ===== Nav superior (idéntica a la del Home, para experiencia sellada) ===== */
 .ctp-topnav{
   flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; gap:14px;
   padding:10px 26px;
@@ -60,7 +59,6 @@ const styles = `
   .ctp-nav-links{gap:10px;}
   .ctp-nav-item{font-size:10.5px;}
 }
-/* ===== fin nav superior ===== */
 
 .ctp-hero{
   position:relative; width:100%; height:clamp(160px,24vh,210px); flex-shrink:0;
@@ -70,10 +68,6 @@ const styles = `
   position:absolute; inset:0; width:100%; height:100%;
   background-image:url('https://hdwzhwuhlrtrmhnecypm.supabase.co/storage/v1/object/public/banners/camino/camino-checkin-banner.webp');
   background-size:cover; background-position:center 38%;
-}
-.ctp-hero-seal{
-  position:absolute; top:10px; left:50%; transform:translateX(-50%);
-  width:clamp(78px,13vh,104px); height:auto; z-index:2;
 }
 .ctp-hero::after{
   content:""; position:absolute; inset:0;
@@ -107,7 +101,7 @@ const styles = `
   width:40px; height:40px; flex-shrink:0;
   border-radius:50%; border:2px solid var(--gold);
   background:radial-gradient(circle at 35% 30%, rgba(255,229,102,0.35), rgba(212,175,55,0.12) 65%, transparent 100%);
-  box-shadow:0 0 18px var(--gold-glow);
+  box-shadow:0 0 18px var(--gold-glow), 0 3px 12px rgba(0,0,0,0.7);
   display:flex; align-items:center; justify-content:center; font-size:19px;
 }
 .ctp-eyebrow-tag{font-family:'Cinzel',serif; font-size:11px; font-weight:900; letter-spacing:2px; color:var(--gold); text-shadow:0 2px 10px rgba(0,0,0,0.85), 0 0 18px rgba(4,2,14,0.9);}
@@ -116,7 +110,6 @@ h1.ctp-title{font-family:'Cinzel Decorative',serif; font-weight:900; font-size:c
 .ctp-hero-sub b{color:var(--gold-bright); font-weight:700;}
 
 .ctp-eyebrow-desktop{display:none;}
-
 @media (min-width:761px){
   .ctp-eyebrow-desktop{
     display:flex; align-items:center; gap:14px;
@@ -130,7 +123,6 @@ h1.ctp-title{font-family:'Cinzel Decorative',serif; font-weight:900; font-size:c
   .ctp-eyebrow-desktop h1.ctp-title{text-shadow:none;}
   .ctp-hero-inner{display:none;}
 }
-
 @media (max-width:760px){
   .ctp-hero{height:clamp(280px,52vh,420px);}
   .ctp-hero-photo{background-position:center 30%;}
@@ -139,18 +131,12 @@ h1.ctp-title{font-family:'Cinzel Decorative',serif; font-weight:900; font-size:c
   .ctp-eyebrow-row{max-width:100%; width:100%; flex-direction:column; align-items:flex-start; gap:10px; padding:14px 16px;}
   .ctp-hero-sub{max-width:100%;}
 }
-.ctp-eyebrow-icon{box-shadow:0 0 18px var(--gold-glow), 0 3px 12px rgba(0,0,0,0.7);}
 
 .ctp-card{
   background:var(--dark-surface); border:1px solid var(--gold-dim); border-radius:16px;
   padding:clamp(14px,1.8vh,20px) clamp(16px,2vw,22px); position:relative; overflow:hidden;
 }
 .ctp-card::before{content:""; position:absolute; inset:0; background:radial-gradient(ellipse 70% 60% at 50% 0%, rgba(212,175,55,0.08), transparent 70%); pointer-events:none;}
-
-.ctp-countdown{text-align:center; display:flex; flex-direction:column; align-items:center; gap:10px; position:relative;}
-.ctp-day-label{font-family:'Cinzel',serif; font-weight:900; font-size:clamp(22px,3.4vh,30px); color:#fff;}
-.ctp-day-label .num{color:var(--gold-bright);}
-.ctp-day-sub{font-family:'Nunito',sans-serif; font-size:14px; color:var(--lilac); max-width:360px;}
 
 .ctp-section-label{
   font-family:'Cinzel',serif; font-weight:900; font-size:14px; letter-spacing:0.3px;
@@ -163,6 +149,13 @@ h1.ctp-title{font-family:'Cinzel Decorative',serif; font-weight:900; font-size:c
   margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid var(--gold-dim);
 }
 .ctp-help-text b{color:var(--gold-bright); font-weight:700;}
+
+/* ⚠️ NUEVO: aviso cuando se está registrando un día distinto al de hoy */
+.ctp-dia-aviso{
+  font-family:'Nunito',sans-serif; font-size:12.5px; color:var(--gold-bright);
+  background:rgba(212,175,55,0.1); border:1px solid var(--gold-dim); border-radius:10px;
+  padding:9px 13px; margin-bottom:12px;
+}
 
 .ctp-form-row{display:flex; flex-direction:column; gap:5px; margin-bottom:9px; position:relative;}
 .ctp-form-row:not(:last-child){padding-bottom:9px;}
@@ -229,16 +222,11 @@ h1.ctp-title{font-family:'Cinzel Decorative',serif; font-weight:900; font-size:c
 const FORMATOS = ['Reel', 'TikTok', 'Historia', 'Post', 'Carrusel'];
 const PLATAFORMAS = ['Instagram', 'TikTok', 'Facebook', 'YouTube'];
 
-// ⚠️ misma ruta usada en CaminoParticipanteHomePage.jsx — mantenerlas sincronizadas
-
-
-// Igual que NAV_ITEMS del Home, pero aquí "Check-in" es el activo
 const NAV_ITEMS = [
   { label: 'Inicio', activo: false, disponible: true, ruta: '/camino/participante/home' },
   { label: 'Check-in', activo: true, disponible: true },
   { label: 'Calendario', activo: false, disponible: true, ruta: '/camino/participante/calendario' },
   { label: 'Pasaporte del Templario', activo: false, disponible: true, ruta: '/camino/participante/pasaporte' },
-  
   { label: 'Ranking', activo: false, disponible: true, ruta: '/camino/participante/ranking' },
 ];
 
@@ -258,9 +246,6 @@ function NavSuperior({ onSalir }) {
               </span>
             );
           }
-          if (item.hrefExterno) {
-            return <a key={item.label} className="ctp-nav-item" href={item.hrefExterno}>{item.label}</a>;
-          }
           if (item.ruta) {
             return <button key={item.label} className="ctp-nav-item" onClick={() => navigate(item.ruta)}>{item.label}</button>;
           }
@@ -274,6 +259,7 @@ function NavSuperior({ onSalir }) {
 
 export default function CaminoParticipantePanelPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams(); // ⚠️ NUEVO
   const [estado, setEstado] = useState('cargando'); // cargando | listo | sin_acceso | error
   const [participante, setParticipante] = useState(null);
 
@@ -304,6 +290,13 @@ export default function CaminoParticipantePanelPage() {
 
   useEffect(() => { cargar(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
 
+  // ⚠️ NUEVO: si viene ?dia=N en la URL (y es un día ya vivido, no futuro), se usa ese.
+  // Si no viene, o es inválido, se usa el día actual real del participante (comportamiento de siempre).
+  const diaActualReal = participante?.dia_actual ?? 1;
+  const diaParam = parseInt(searchParams.get('dia'), 10);
+  const diaSeleccionado = (!isNaN(diaParam) && diaParam >= 1 && diaParam <= diaActualReal) ? diaParam : diaActualReal;
+  const esDiaAtrasado = diaSeleccionado !== diaActualReal;
+
   async function enviarCheckin() {
     setMsgError('');
     setMsgOk('');
@@ -314,7 +307,7 @@ export default function CaminoParticipantePanelPage() {
 
     setEnviando(true);
     const { error } = await supabase.rpc('camino_registrar_checkin', {
-      p_dia_numero: participante.dia_actual,
+      p_dia_numero: diaSeleccionado, // ⚠️ antes: participante.dia_actual
       p_formato: formato,
       p_plataforma: plataforma,
       p_video_url: null,
@@ -363,7 +356,7 @@ export default function CaminoParticipantePanelPage() {
     );
   }
 
-  const diaActual = participante?.dia_actual ?? 1;
+  const diaActual = diaSeleccionado; // ⚠️ antes: participante?.dia_actual ?? 1
 
   return (
     <div className="ctp-root">
@@ -374,45 +367,6 @@ export default function CaminoParticipantePanelPage() {
 
       <div className="ctp-hero">
         <div className="ctp-hero-photo" />
-
-        <svg className="ctp-hero-seal" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <radialGradient id="ctpSealAura" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#0c0620" stopOpacity="0.9" />
-              <stop offset="55%" stopColor="#0c0620" stopOpacity="0.6" />
-              <stop offset="100%" stopColor="#0c0620" stopOpacity="0" />
-            </radialGradient>
-          </defs>
-          <g transform="translate(110,110)">
-            <circle r="108" fill="url(#ctpSealAura)" />
-            <circle r="72" fill="none" stroke="#D4AF37" strokeWidth="1.5" opacity="0.85" />
-            <circle r="58" fill="none" stroke="#FFE566" strokeWidth="1" opacity="0.45" />
-            <circle r="38" fill="#0c0620" stroke="#D4AF37" strokeWidth="1.5" />
-            <text x="0" y="-9" textAnchor="middle" fontFamily="'Cinzel',serif" fontWeight="700" fontSize="8" letterSpacing="2" fill="#D4AF37" opacity="0.85">DÍA</text>
-            <text x="0" y="20" textAnchor="middle" fontFamily="'Cinzel Decorative',serif" fontWeight="900" fontSize="26" fill="#FFE566">{diaActual}</text>
-
-            <g transform="translate(0,-86)">
-              <circle r="16" fill="#0c0620" stroke="#D4AF37" strokeWidth="1.3" />
-              <rect x="-7" y="-5" width="14" height="10" rx="2" fill="none" stroke="#FFE566" strokeWidth="1.3" />
-              <circle r="3" fill="none" stroke="#FFE566" strokeWidth="1.2" />
-              <rect x="-3" y="-7.5" width="6" height="2.5" rx="1" fill="#FFE566" />
-            </g>
-            <g transform="translate(86,0)">
-              <circle r="16" fill="#0c0620" stroke="#D4AF37" strokeWidth="1.3" />
-              <path d="M-4,-6 L7,0 L-4,6 Z" fill="#FFE566" />
-            </g>
-            <g transform="translate(0,86)">
-              <circle r="16" fill="#0c0620" stroke="#D4AF37" strokeWidth="1.3" />
-              <path d="M-7,-4 h14 a2,2 0 0 1 2,2 v4 a2,2 0 0 1 -2,2 h-9 l-4,4 v-4 h-1 a2,2 0 0 1 -2,-2 v-4 a2,2 0 0 1 2,-2 z"
-                fill="none" stroke="#FFE566" strokeWidth="1.2" />
-            </g>
-            <g transform="translate(-86,0)">
-              <circle r="16" fill="#0c0620" stroke="#D4AF37" strokeWidth="1.3" />
-              <path d="M0,-7 L2,-2 L7,-2 L3,1 L5,6 L0,3 L-5,6 L-3,1 L-7,-2 L-2,-2 Z" fill="#FFE566" />
-            </g>
-          </g>
-        </svg>
-
         <div className="ctp-hero-inner">
           <div className="ctp-eyebrow-row">
             <div className="ctp-eyebrow-icon">🗺️</div>
@@ -436,7 +390,14 @@ export default function CaminoParticipantePanelPage() {
 
       <div className="ctp-wrap">
         <div className="ctp-card">
-          <div className="ctp-section-label">Registrar evidencia de hoy</div>
+          <div className="ctp-section-label">Registrar evidencia {esDiaAtrasado ? `del día ${diaActual}` : 'de hoy'}</div>
+
+          {esDiaAtrasado && (
+            <div className="ctp-dia-aviso">
+              ⏳ Estás registrando un día atrasado (Día {diaActual}), no tu día de hoy. Esto también cuenta para tu racha.
+            </div>
+          )}
+
           <p className="ctp-help-text">
             Publica sobre el reto en tus redes y pega aquí el link. Eso cuenta como tu evidencia del día:
             mantiene tu racha viva y te suma puntos en el <b>Ranking</b>.

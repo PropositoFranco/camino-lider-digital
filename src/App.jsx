@@ -1,5 +1,7 @@
 import { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import CaminoParticipanteCalendarioHistoriasPage from './features/camino/CaminoParticipanteCalendarioHistoriasPage';
+import CaminoParticipanteBancoRazonesPage from './features/camino/CaminoParticipanteBancoRazonesPage';
 
 const CaminoLandingPage = lazy(() => import('./features/camino/CaminoLandingPage'));
 const CaminoGestorLoginPage = lazy(() => import('./features/camino/CaminoGestorLoginPage'));
@@ -31,6 +33,8 @@ export default function App() {
           <Route path="/camino/participante/panel" element={<CaminoParticipantePanelPage />} />
           <Route path="/camino/participante/calendario" element={<CaminoParticipanteCalendarioPage />} />
           <Route path="/camino/participante/bases" element={<CaminoParticipanteBasesPage />} />
+          <Route path="/camino/participante/calendario-historias" element={<CaminoParticipanteCalendarioHistoriasPage />} />
+<Route path="/camino/participante/banco-razones" element={<CaminoParticipanteBancoRazonesPage />} />
           <Route path="/camino/participante/ranking" element={<CaminoParticipanteRankingPage />} />
           <Route path="/camino/participante/onboarding" element={<CaminoParticipanteOnboardingPage />} />
           <Route path="/camino/instalar" element={<CaminoInstalarPage />} />
