@@ -4,6 +4,19 @@ import { supabaseCamino as supabase } from '../../services/supabaseCamino';
 import CaminoModoToggle from './CaminoModoToggle';
 import CaminoGuionModal from './CaminoGuionModal';
 
+// Tabla día → formato, copiada tal cual de CaminoParticipanteCalendarioPage.jsx (WEEKS),
+// para que el modal de guion reciba EXACTAMENTE el mismo texto de "formato" que usa
+// Calendario — es el valor que camino_prompts_formato espera en su columna `formato`.
+// Si algún día cambia el formato en Calendario, hay que actualizar aquí también.
+const FORMATOS_POR_DIA = {
+  1: 'Ranking', 2: 'Versus', 3: 'Niveles / Etapas', 4: 'Frente a cámara', 5: 'Fórmula',
+  6: 'Storytelling B-Roll', 7: 'Esquema de Decisión', 8: 'Post-it / Pizarra', 9: 'Explicación con objeto',
+  10: 'Carteles', 11: 'Versus textual', 12: 'Sketch', 13: 'Comparación', 14: 'Frecuencia / Lista',
+  15: 'Carteles', 16: 'Reto en tiempo', 17: 'Galería Premium', 18: 'Frente a cámara', 19: 'Versus textual',
+  20: 'Comparación', 21: 'B-roll narrado', 22: 'Sketch', 23: 'Frente a cámara', 24: 'Carteles',
+  25: 'Versus + pizarra en blanco', 26: 'Pantalla dividida + pizarra digital', 27: 'Escalas / Timeline', 28: 'Pantalla verde',
+};
+
 /* ============================================================================
    CONFIG — cosas que TÚ necesitas rellenar/confirmar
    ========================================================================== */
@@ -459,6 +472,11 @@ export default function CaminoParticipanteHomePage() {
 
   const formatoNombre = fichaHoy?.camino_formatos_ficha?.nombre || fichaHoy?.titulo_dia || '';
   const formatoEmoji = fichaHoy?.camino_formatos_ficha?.emoji || '✨';
+  // Este es el que se le pasa al modal de guion — tiene que ser el nombre EXACTO
+  // que usa Calendario (ej. "Ranking"), no el nombre largo de la ficha, porque
+  // camino_prompts_formato busca por ese texto exacto y si no matchea, el prompt
+  // llega vacío.
+  const formatoParaGuion = FORMATOS_POR_DIA[diaActual] || formatoNombre;
 
   async function enviarCheckpoint() {
     setCpMsgError(''); setCpMsgOk('');
@@ -751,7 +769,7 @@ export default function CaminoParticipanteHomePage() {
       )}
 
       {modal === 'guion' && (
-        <CaminoGuionModal formato={formatoNombre} onClose={() => setModal(null)} />
+        <CaminoGuionModal formato={formatoParaGuion} onClose={() => setModal(null)} />
       )}
 
       {modal === 'checkpoint' && cpPendiente && (
