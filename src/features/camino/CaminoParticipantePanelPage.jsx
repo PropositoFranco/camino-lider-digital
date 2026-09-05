@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabaseCamino as supabase } from '../../services/supabaseCamino';
+import CaminoChecklistPrepublicacion from './CaminoChecklistPrepublicacion';
 
 const styles = `
 :root{
@@ -227,6 +228,7 @@ const NAV_ITEMS = [
   { label: 'Check-in', activo: true, disponible: true },
   { label: 'Calendario', activo: false, disponible: true, ruta: '/camino/participante/calendario' },
   { label: 'Pasaporte del Templario', activo: false, disponible: true, ruta: '/camino/participante/pasaporte' },
+{ label: 'Armería', activo: false, disponible: true, ruta: '/camino/participante/armeria' },
   { label: 'Ranking', activo: false, disponible: true, ruta: '/camino/participante/ranking' },
 ];
 
@@ -269,6 +271,7 @@ export default function CaminoParticipantePanelPage() {
   const [enviando, setEnviando] = useState(false);
   const [msgOk, setMsgOk] = useState('');
   const [msgError, setMsgError] = useState('');
+  const [checklistCompleto, setChecklistCompleto] = useState(false);
 
   async function cargar() {
     const { data: sessionData } = await supabase.auth.getSession();
@@ -306,19 +309,21 @@ export default function CaminoParticipantePanelPage() {
     }
 
     setEnviando(true);
-    const { error } = await supabase.rpc('camino_registrar_checkin', {
+    const { data: checkinId, error } = await supabase.rpc('camino_registrar_checkin', {
       p_dia_numero: diaSeleccionado, // ⚠️ antes: participante.dia_actual
       p_formato: formato,
       p_plataforma: plataforma,
       p_video_url: null,
       p_link_post: linkPost.trim(),
     });
-    setEnviando(false);
 
     if (error) {
+      setEnviando(false);
       setMsgError('No se pudo registrar tu evidencia. Intenta de nuevo.');
       return;
     }
+
+    setEnviando(false);
     setMsgOk('¡Evidencia registrada! Sigue así, Templario.');
     setLinkPost('');
   }
@@ -389,6 +394,11 @@ export default function CaminoParticipantePanelPage() {
       </div>
 
       <div className="ctp-wrap">
+        <CaminoChecklistPrepublicacion
+          diaNumero={diaActual}
+          onCompletoChange={setChecklistCompleto}
+        />
+
         <div className="ctp-card">
           <div className="ctp-section-label">Registrar evidencia {esDiaAtrasado ? `del día ${diaActual}` : 'de hoy'}</div>
 
@@ -429,8 +439,8 @@ export default function CaminoParticipantePanelPage() {
               onChange={(e) => setLinkPost(e.target.value)}
             />
           </div>
-          <button className="ctp-btn" disabled={enviando} onClick={enviarCheckin}>
-            {enviando ? 'REGISTRANDO...' : 'REGISTRAR EVIDENCIA'}
+          <button className="ctp-btn" disabled={enviando || !checklistCompleto} onClick={enviarCheckin}>
+            {enviando ? 'REGISTRANDO...' : checklistCompleto ? 'REGISTRAR EVIDENCIA' : 'COMPLETA EL CHECKLIST DE ARRIBA'}
           </button>
           {msgOk && <p className="ctp-msg-ok">{msgOk}</p>}
           {msgError && <p className="ctp-msg-error">{msgError}</p>}

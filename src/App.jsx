@@ -13,6 +13,7 @@ const CaminoParticipantePasaportePage = lazy(() => import('./features/camino/Cam
 const CaminoParticipanteCalendarioPage = lazy(() => import('./features/camino/CaminoParticipanteCalendarioPage'));
 const CaminoParticipanteBasesPage = lazy(() => import('./features/camino/CaminoParticipanteBasesPage'));
 const CaminoParticipanteRankingPage = lazy(() => import('./features/camino/CaminoParticipanteRankingPage'));
+const CaminoParticipanteArmeriaPage = lazy(() => import('./features/camino/CaminoParticipanteArmeriaPage'));
 const CaminoParticipanteOnboardingPage = lazy(() => import('./features/camino/CaminoParticipanteOnboardingPage'));
 const CaminoInstalarPage = lazy(() => import('./features/camino/CaminoInstalarPage'));
 
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="/camino/participante/calendario-historias" element={<CaminoParticipanteCalendarioHistoriasPage />} />
 <Route path="/camino/participante/banco-razones" element={<CaminoParticipanteBancoRazonesPage />} />
           <Route path="/camino/participante/ranking" element={<CaminoParticipanteRankingPage />} />
+          <Route path="/camino/participante/armeria" element={<CaminoParticipanteArmeriaPage />} />
           <Route path="/camino/participante/onboarding" element={<CaminoParticipanteOnboardingPage />} />
           <Route path="/camino/instalar" element={<CaminoInstalarPage />} />
 

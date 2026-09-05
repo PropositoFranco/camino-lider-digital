@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
+import CaminoVideoUploader from './CaminoVideoUploader';
+import CaminoGestorMetricasBlock from './CaminoGestorMetricasBlock';
+import CaminoModoToggle from './CaminoModoToggle';
 
 const styles = `
 :root{
@@ -20,11 +23,15 @@ const styles = `
 .cgp-btn-aceptar{padding:8px 14px; background:rgba(68,255,136,0.12); border:1px solid rgba(68,255,136,0.35); border-radius:8px; color:var(--green); font-family:'Cinzel',serif; font-size:9px; letter-spacing:1px; cursor:pointer;}
 .cgp-btn-descartar{padding:8px 14px; background:rgba(255,68,102,0.1); border:1px solid rgba(255,68,102,0.3); border-radius:8px; color:var(--red); font-family:'Cinzel',serif; font-size:9px; letter-spacing:1px; cursor:pointer;}
 .cgp-btn-invitar{padding:10px 18px; background:rgba(155,89,255,0.12); border:1px solid rgba(155,89,255,0.35); border-radius:10px; color:var(--purple); font-family:'Cinzel',serif; font-weight:700; font-size:11px; letter-spacing:1px; cursor:pointer;}
+.cgp-btn-enlace{padding:10px 16px; background:rgba(212,175,55,0.1); border:1px solid var(--border); border-radius:10px; color:var(--gold); font-family:'Cinzel',serif; font-weight:700; font-size:10.5px; letter-spacing:0.8px; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; white-space:nowrap;}
+.cgp-btn-enlace:hover{border-color:var(--borderHi); background:rgba(212,175,55,0.16);}
 .cgp-root button:disabled{opacity:0.5; cursor:default;}
 .cgp-modal-fondo{position:fixed; inset:0; background:rgba(4,2,14,0.88); z-index:9999; display:flex; align-items:center; justify-content:center;}
 .cgp-modal-caja{background:var(--card); border:1.5px solid var(--borderHi); border-radius:20px; padding:32px 28px; text-align:center; max-width:340px; width:90%;}
 .cgp-modal-cerrar{margin-top:16px; background:none; border:none; color:var(--muted); font-family:'Cinzel',serif; font-size:9px; cursor:pointer; letter-spacing:1px;}
 .cgp-root input[type=date]{background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:8px; padding:6px 10px; color:var(--text); font-family:'Cinzel',serif; font-size:11px;}
+.cgp-root select{color-scheme:dark;}
+.cgp-root select option{background:#150d28; color:#f0eaff;}
 `;
 
 function copiar(texto) { navigator.clipboard?.writeText(texto).catch(() => {}); }
@@ -39,6 +46,12 @@ export default function CaminoGestorPanelPage() {
   const [modalCodigo, setModalCodigo] = useState(null);
   const [modalInvite, setModalInvite] = useState(null);
   const [invitando, setInvitando] = useState(false);
+  const [diaSeleccionado, setDiaSeleccionado] = useState(1);
+  const [miUid, setMiUid] = useState(null);
+  const [modalAgregar, setModalAgregar] = useState(false);
+  const [nuevoNombre, setNuevoNombre] = useState('');
+  const [nuevoTelefono, setNuevoTelefono] = useState('');
+  const [agregando, setAgregando] = useState(false);
 
   const BASE_URL = window.location.origin;
 
@@ -56,6 +69,7 @@ export default function CaminoGestorPanelPage() {
       return;
     }
     const uid = sessionData.session.user.id;
+    setMiUid(uid);
     const { data: gestor } = await supabase
       .from('camino_gestores')
       .select('nombre, activo')
@@ -96,6 +110,25 @@ export default function CaminoGestorPanelPage() {
   async function descartarInteresado(id) {
     const { error } = await supabase.rpc('descartar_interesado_camino_gestor', { p_interesado_id: id });
     if (error) { alert('No se pudo descartar: ' + error.message); return; }
+    cargarInteresados();
+  }
+
+  async function agregarInteresado() {
+    if (!nuevoNombre.trim()) { alert('Escribe el nombre.'); return; }
+    const soloDigitos = nuevoTelefono.replace(/[^0-9]/g, '');
+    if (!soloDigitos) { alert('Escribe el teléfono.'); return; }
+    const telefonoFinal = soloDigitos.length === 10 ? `52${soloDigitos}` : soloDigitos;
+    setAgregando(true);
+    const { error } = await supabase.from('camino_interesados').insert({
+      nombre: nuevoNombre.trim(),
+      telefono: telefonoFinal,
+      gestor_id: miUid,
+    });
+    setAgregando(false);
+    if (error) { alert('No se pudo agregar: ' + error.message); return; }
+    setNuevoNombre('');
+    setNuevoTelefono('');
+    setModalAgregar(false);
     cargarInteresados();
   }
 
@@ -142,15 +175,31 @@ export default function CaminoGestorPanelPage() {
       <div className="cgp-wrap">
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-          <div>
-            <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 900, fontSize: 10, letterSpacing: 2, color: 'var(--gold)' }}>PANEL DE GESTOR</div>
-            <h1 style={{ fontFamily: "'Cinzel',serif", fontWeight: 900, fontSize: 'clamp(20px,3vw,26px)', color: 'var(--text)', margin: '4px 0 0' }}>
-              {nombreGestor ? `Hola, ${nombreGestor}` : 'Tu Camino'}
-            </h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div>
+              <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 900, fontSize: 10, letterSpacing: 2, color: 'var(--gold)' }}>PANEL DE GESTOR</div>
+              <h1 style={{ fontFamily: "'Cinzel',serif", fontWeight: 900, fontSize: 'clamp(20px,3vw,26px)', color: 'var(--text)', margin: '4px 0 0' }}>
+                {nombreGestor ? `Hola, ${nombreGestor}` : 'Tu Camino'}
+              </h1>
+            </div>
+            <CaminoModoToggle modo="gestor" />
           </div>
-          <button className="cgp-btn-invitar" disabled={invitando} onClick={generarInvitacion}>
-            {invitando ? 'GENERANDO...' : '+ INVITAR NUEVO GESTOR'}
-          </button>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <a href="https://propotienda.com/hub" className="cgp-btn-enlace">🏛️ IR AL HUB</a>
+            <a href="https://propotienda.com/admin" className="cgp-btn-enlace">🔐 IR A ADMIN</a>
+            <a href="https://camino.propotienda.com/camino/participante/pasaporte" className="cgp-btn-enlace">📜 VER PASAPORTE</a>
+            <button className="cgp-btn-invitar" onClick={() => setModalAgregar(true)}>
+              + AGREGAR INTERESADO
+            </button>
+            <button className="cgp-btn-invitar" disabled={invitando} onClick={generarInvitacion}>
+              {invitando ? 'GENERANDO...' : '+ INVITAR NUEVO GESTOR'}
+            </button>
+          </div>
+        </div>
+
+        <div className="cgp-tarjeta">
+          <h2 className="cgp-titulo-tarjeta">📊 MÉTRICAS DE TU EQUIPO</h2>
+          <CaminoGestorMetricasBlock />
         </div>
 
         <div className="cgp-tarjeta">
@@ -186,13 +235,49 @@ export default function CaminoGestorPanelPage() {
             const borderColor = i.estado === 'aceptado' ? 'rgba(68,255,136,0.3)' : 'rgba(255,255,255,0.1)';
             return (
               <div className="cgp-fila-hist" key={i.id}>
-                <div style={{ fontFamily: "'Cinzel',serif", fontSize: 12, color: 'var(--text)' }}>{i.nombre}</div>
-                <span style={{ fontFamily: "'Cinzel',serif", fontSize: 8, letterSpacing: 1, color, border: `1px solid ${borderColor}`, borderRadius: 20, padding: '3px 10px' }}>
-                  {i.estado === 'aceptado' ? '✓ ACEPTADO' : '○ DESCARTADO'}
-                </span>
+                <div>
+                  <div style={{ fontFamily: "'Cinzel',serif", fontSize: 12, color: 'var(--text)' }}>{i.nombre}</div>
+                  {i.estado === 'aceptado' && i.invite_token && (
+                    <div style={{ fontFamily: "'Cinzel',serif", fontSize: 8, letterSpacing: 0.5, color: 'var(--muted)', marginTop: 3 }}>
+                      {i.invite_usado ? '● ya activó su acceso' : `○ invitación vigente hasta ${new Date(i.invite_expires_at).toLocaleDateString('es-MX')}`}
+                    </div>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  {i.estado === 'aceptado' && i.invite_token && (
+                    <button
+                      className="cgp-btn-aceptar"
+                      onClick={() => setModalCodigo({
+                        nombre: i.nombre,
+                        telefono: i.telefono,
+                        url: `${BASE_URL}/camino/participante/login?invite=${i.invite_token}`,
+                      })}
+                    >🔗 VER LINK</button>
+                  )}
+                  <span style={{ fontFamily: "'Cinzel',serif", fontSize: 8, letterSpacing: 1, color, border: `1px solid ${borderColor}`, borderRadius: 20, padding: '3px 10px' }}>
+                    {i.estado === 'aceptado' ? '✓ ACEPTADO' : '○ DESCARTADO'}
+                  </span>
+                </div>
               </div>
             );
           })}
+        </div>
+
+        <div className="cgp-tarjeta">
+          <h2 className="cgp-titulo-tarjeta">🎬 VIDEOS DEL CALENDARIO</h2>
+          <p style={{ color: 'var(--muted)', fontSize: 11.5, marginBottom: 16 }}>
+            Elige el día y sube el video — se transcodifica solo en Bunny y aparece en el Calendario del participante en cuanto termina.
+          </p>
+          <select
+            value={diaSeleccionado}
+            onChange={(e) => setDiaSeleccionado(Number(e.target.value))}
+            style={{ marginBottom: 14, background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', color: 'var(--text)', fontFamily: "'Cinzel',serif", fontSize: 11, colorScheme: 'dark' }}
+          >
+            {Array.from({ length: 28 }, (_, i) => i + 1).map((n) => (
+              <option key={n} value={n}>Día {n}</option>
+            ))}
+          </select>
+          <CaminoVideoUploader diaNumero={diaSeleccionado} />
         </div>
 
         <div className="cgp-tarjeta" style={{ background: 'rgba(155,89,255,0.05)', border: '1px solid rgba(155,89,255,0.2)' }}>
@@ -239,6 +324,37 @@ export default function CaminoGestorPanelPage() {
             </div>
             <div style={{ fontFamily: "'Nunito',sans-serif", fontSize: 10.5, color: 'var(--muted)', marginTop: 14 }}>Válida 14 días, un solo uso.</div>
             <button className="cgp-modal-cerrar" onClick={() => setModalInvite(null)}>CERRAR</button>
+          </div>
+        </div>
+      )}
+
+      {modalAgregar && (
+        <div className="cgp-modal-fondo" onClick={() => setModalAgregar(false)}>
+          <div className="cgp-modal-caja" onClick={(e) => e.stopPropagation()}>
+            <div style={{ fontSize: 28, marginBottom: 8 }}>🤝</div>
+            <div style={{ fontFamily: "'Cinzel',serif", fontWeight: 900, fontSize: 14, color: 'var(--gold)', letterSpacing: 2, marginBottom: 16 }}>NUEVO INTERESADO</div>
+            <input
+              type="text"
+              placeholder="Nombre completo"
+              value={nuevoNombre}
+              onChange={(e) => setNuevoNombre(e.target.value)}
+              style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px', color: 'var(--text)', fontFamily: "'Nunito',sans-serif", fontSize: 13, marginBottom: 12 }}
+            />
+            <input
+              type="tel"
+              placeholder="Teléfono (ej. 8443934803)"
+              value={nuevoTelefono}
+              onChange={(e) => setNuevoTelefono(e.target.value)}
+              style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px', color: 'var(--text)', fontFamily: "'Nunito',sans-serif", fontSize: 13, marginBottom: 16 }}
+            />
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button
+                style={{ padding: '10px 16px', background: 'rgba(68,255,136,0.12)', border: '1px solid rgba(68,255,136,0.35)', borderRadius: 8, color: 'var(--green)', fontFamily: "'Cinzel',serif", fontSize: 9, letterSpacing: 1, cursor: 'pointer' }}
+                disabled={agregando}
+                onClick={agregarInteresado}
+              >{agregando ? 'GUARDANDO...' : '✓ AGREGAR'}</button>
+            </div>
+            <button className="cgp-modal-cerrar" onClick={() => setModalAgregar(false)}>CERRAR</button>
           </div>
         </div>
       )}

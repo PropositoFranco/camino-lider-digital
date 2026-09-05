@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import CaminoModoToggle from "./CaminoModoToggle";
 
 export default function CaminoParticipanteBasesPage() {
   const navigate = useNavigate();
@@ -72,12 +73,11 @@ export default function CaminoParticipanteBasesPage() {
           <button className="nav-item" onClick={() => navigate('/camino/participante/panel')}>Check-in</button>
           <button className="nav-item" onClick={() => navigate('/camino/participante/calendario')}>Calendario</button>
           <button className="nav-item" onClick={() => navigate('/camino/participante/pasaporte')}>Pasaporte del Templario</button>
+          <button className="nav-item" onClick={() => navigate('/camino/participante/armeria')}>Armería</button>
           <span className="nav-item" style={{ opacity: 0.4, cursor: 'default' }}>Sala de Cowork</span>
           <span className="nav-item" style={{ opacity: 0.4, cursor: 'default' }}>Ranking</span>
         </div>
-        <select className="nav-select">
-          <option>Camino a Líder Digital · Gen. Agosto</option>
-        </select>
+        <CaminoModoToggle />
       </nav>
 
       <div className="wrap">
