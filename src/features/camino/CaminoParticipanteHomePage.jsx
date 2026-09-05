@@ -36,7 +36,10 @@ const URL_PERSONAJE_CHECKPOINT =
   'https://hdwzhwuhlrtrmhnecypm.supabase.co/storage/v1/object/public/camino-recursos/personaje-checkpoint.png';
 
 const TOTAL_DIAS = 28;
-const DIAS_CHECKPOINT = [14, 28];
+const DIAS_CHECKPOINT = [1, 14, 28];
+// Etiqueta del período que se le pide en cada checkpoint (para que el usuario
+// sepa de qué ventana de tiempo son las métricas que va a escribir).
+const PERIODO_CHECKPOINT = { 1: 'ÚLTIMOS 28 DÍAS (tu punto de partida)', 14: 'ÚLTIMOS 14 DÍAS', 28: 'ÚLTIMOS 28 DÍAS (cierre)' };
 
 /* ============================================================================
    ESTILOS
@@ -336,8 +339,9 @@ export default function CaminoParticipanteHomePage() {
   const [ideaAbierta, setIdeaAbierta] = useState(false); // acordeón "Ver la idea completa", dentro del mismo cuadro
 
   // ---- estado del formulario de checkpoint ----
-  const [cpAvances, setCpAvances] = useState('');
-  const [cpArchivo, setCpArchivo] = useState(null);
+  const [cpSeguidores, setCpSeguidores] = useState('');
+  const [cpAlcance, setCpAlcance] = useState('');
+  const [cpInteracciones, setCpInteracciones] = useState('');
   const [cpEnviando, setCpEnviando] = useState(false);
   const [cpMsgOk, setCpMsgOk] = useState('');
   const [cpMsgError, setCpMsgError] = useState('');
@@ -470,6 +474,14 @@ export default function CaminoParticipanteHomePage() {
   }
   const cpPendiente = checkpointPendiente();
 
+  // El Checkpoint 1 (Día 1) es obligatorio ANTES de usar la plataforma —
+  // se abre solo y no se puede cerrar hasta que lo registre.
+  useEffect(() => {
+    if (cpPendiente?.numero === 1 && modal !== 'checkpoint') setModal('checkpoint');
+  }, [cpPendiente?.numero]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const cpEsObligatorio = cpPendiente?.numero === 1;
+
   const formatoNombre = fichaHoy?.camino_formatos_ficha?.nombre || fichaHoy?.titulo_dia || '';
   const formatoEmoji = fichaHoy?.camino_formatos_ficha?.emoji || '✨';
   // Este es el que se le pasa al modal de guion — tiene que ser el nombre EXACTO
@@ -481,31 +493,25 @@ export default function CaminoParticipanteHomePage() {
   async function enviarCheckpoint() {
     setCpMsgError(''); setCpMsgOk('');
     if (!cpPendiente) return;
+    if (cpSeguidores === '' || cpAlcance === '' || cpInteracciones === '') {
+      setCpMsgError('Completa los 3 datos: seguidores, alcance e interacciones.');
+      return;
+    }
     setCpEnviando(true);
     try {
-      let capturasUrl = null;
-      if (cpArchivo) {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const uid = sessionData?.session?.user?.id;
-        const ext = cpArchivo.name.split('.').pop();
-        const path = `${uid}/checkpoint-${cpPendiente.numero}-${Date.now()}.${ext}`;
-        const { error: upErr } = await supabase.storage.from('evidencia-camino').upload(path, cpArchivo);
-        if (upErr) throw upErr;
-        const { data: pub } = supabase.storage.from('evidencia-camino').getPublicUrl(path);
-        capturasUrl = pub?.publicUrl || null;
-      }
-
       const { error } = await supabase.rpc('camino_registrar_checkpoint', {
         p_numero_checkpoint: cpPendiente.numero,
         p_dia_numero: cpPendiente.dia,
-        p_avances_texto: cpAvances.trim() || null,
-        p_capturas_url: capturasUrl,
+        p_seguidores: Number(cpSeguidores),
+        p_alcance: Number(cpAlcance),
+        p_interacciones: Number(cpInteracciones),
       });
       if (error) throw error;
 
       setCpMsgOk('¡Checkpoint registrado! Sigue así, Templario.');
-      setCpAvances('');
-      setCpArchivo(null);
+      setCpSeguidores('');
+      setCpAlcance('');
+      setCpInteracciones('');
       const { data: rachaData } = await supabase.rpc('camino_mi_racha');
       if (rachaData && rachaData.length > 0) setRacha(rachaData[0]);
       setTimeout(() => setModal(null), 1200);
@@ -691,7 +697,7 @@ export default function CaminoParticipanteHomePage() {
             <img src={URL_PERSONAJE_CHECKPOINT} alt="" className="chh-checkpoint-personaje" />
             <div className="chh-checkpoint-bubble">
               <div className="chh-checkpoint-tag">Checkpoint {cpPendiente.numero}</div>
-              <div className="chh-checkpoint-msg">¡Hoy es el Checkpoint {cpPendiente.numero}! Sube tus avances y capturas.</div>
+              <div className="chh-checkpoint-msg">¡Hoy es el Checkpoint {cpPendiente.numero}! Registra tus seguidores, alcance e interacciones.</div>
             </div>
             <div className="chh-checkpoint-actions">
               <button className="chh-btn" onClick={() => setModal('checkpoint')}>🚩 REGISTRAR CHECKPOINT</button>
@@ -773,19 +779,28 @@ export default function CaminoParticipanteHomePage() {
       )}
 
       {modal === 'checkpoint' && cpPendiente && (
-        <div className="chh-modal-overlay" onClick={() => setModal(null)}>
+        <div className="chh-modal-overlay" onClick={() => { if (!cpEsObligatorio) setModal(null); }}>
           <div className="chh-modal" onClick={(e) => e.stopPropagation()}>
             <div className="chh-modal-head">
               <div className="chh-modal-title">🚩 Registrar Checkpoint {cpPendiente.numero}</div>
-              <button className="chh-modal-close" onClick={() => setModal(null)}>✕</button>
+              {!cpEsObligatorio && (
+                <button className="chh-modal-close" onClick={() => setModal(null)}>✕</button>
+              )}
+            </div>
+            <p className="chh-modal-text" style={{ marginBottom: 14 }}>
+              Captura tus métricas de los {PERIODO_CHECKPOINT[cpPendiente.dia] || 'últimos días'}. Sé exacto — esto es lo que le permite a tu gestor ver tu evolución real.
+            </p>
+            <div className="chh-form-row">
+              <label>Seguidores actuales</label>
+              <input className="chh-input-text" type="number" min="0" inputMode="numeric" value={cpSeguidores} onChange={(e) => setCpSeguidores(e.target.value)} placeholder="Ej. 1240" />
             </div>
             <div className="chh-form-row">
-              <label>Cuéntanos tus avances</label>
-              <textarea className="chh-textarea" rows={4} value={cpAvances} onChange={(e) => setCpAvances(e.target.value)} placeholder="¿Qué has logrado hasta ahora en tu Camino?" />
+              <label>Alcance (personas alcanzadas)</label>
+              <input className="chh-input-text" type="number" min="0" inputMode="numeric" value={cpAlcance} onChange={(e) => setCpAlcance(e.target.value)} placeholder="Ej. 8500" />
             </div>
             <div className="chh-form-row">
-              <label>Sube una captura (opcional)</label>
-              <input className="chh-input-text" type="file" accept="image/*" onChange={(e) => setCpArchivo(e.target.files?.[0] || null)} />
+              <label>Interacciones (likes + comentarios + compartidos)</label>
+              <input className="chh-input-text" type="number" min="0" inputMode="numeric" value={cpInteracciones} onChange={(e) => setCpInteracciones(e.target.value)} placeholder="Ej. 320" />
             </div>
             <button className="chh-btn" disabled={cpEnviando} onClick={enviarCheckpoint}>
               {cpEnviando ? 'REGISTRANDO...' : 'REGISTRAR CHECKPOINT'}
