@@ -277,7 +277,7 @@ export default function CaminoGestorPanelPage() {
           <div className="cgp-tarjeta">
             <h2 className="cgp-titulo-tarjeta">🗂️ REGISTRO DE USUARIOS</h2>
             <p style={{ color: 'var(--muted)', fontSize: 11.5, marginBottom: 16 }}>
-              Todos tus participantes, sus checkpoints (seguidores, alcance e interacciones) y todo lo que registran durante su reto de 28 días. Da clic en cualquiera para ver su ficha completa.
+              Lista de todos tus participantes. Da clic en cualquiera para ver sus checkpoints de Día 1, 14 y 28 (seguidores, alcance e interacciones) y el análisis de su transformación durante el reto.
             </p>
             <CaminoGestorRegistroUsuarios />
           </div>
