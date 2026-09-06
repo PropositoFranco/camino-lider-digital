@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabaseCamino as supabase } from '../../services/supabaseCamino';
 import CaminoModoToggle from './CaminoModoToggle';
 import CaminoGuionModal from './CaminoGuionModal';
@@ -304,6 +304,13 @@ h1.chh-title{font-family:'Cinzel Decorative',serif; font-weight:900; font-size:c
 .chh-msg-ok{color:var(--green); font-size:12.5px; margin-top:8px;}
 .chh-msg-error{color:var(--red); font-size:12.5px; margin-top:8px;}
 
+.chh-cp-obligatorio{
+  display:flex; align-items:flex-start; gap:8px; margin-bottom:14px; padding:11px 14px;
+  border-radius:10px; background:rgba(255,196,68,0.08); border:1px solid rgba(255,196,68,0.35);
+  font-family:'Nunito',sans-serif; font-size:12.5px; line-height:1.55; color:#ffe3a0;
+}
+.chh-cp-obligatorio b{color:#ffc444;}
+
 @media (max-width:760px){
   .chh-topnav{padding:8px 14px;}
   .chh-nav-links{gap:10px;}
@@ -328,6 +335,7 @@ function rellenarPrompt(texto, nicho) {
 
 export default function CaminoParticipanteHomePage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [estado, setEstado] = useState('cargando'); // cargando | listo | sin_acceso
   const [participante, setParticipante] = useState(null);
   const [racha, setRacha] = useState({ racha_actual: 0, mejor_racha: 0, dias_completados: 0, dias_registrados: [], checkpoints_registrados: [] });
@@ -450,13 +458,24 @@ export default function CaminoParticipanteHomePage() {
   }
   const cpPendiente = checkpointPendiente();
 
-  // El Checkpoint 1 (Día 1) es obligatorio ANTES de usar la plataforma —
-  // se abre solo y no se puede cerrar hasta que lo registre.
+  // CUALQUIER checkpoint pendiente (1, 2 o 3) es obligatorio ANTES de seguir
+  // usando la plataforma — se abre solo, no se puede cerrar ni tachar sin
+  // contestar, y esto aplica siempre, sin importar si el usuario entró el
+  // día exacto del checkpoint o varios días después (ej. iba en el día 13,
+  // no entró el día 14, y volvió hasta el día 16 — igual le debe aparecer).
+  // checkpointPendiente() ya revisa hacia atrás y siempre regresa el
+  // checkpoint más reciente que el participante todavía no ha registrado,
+  // así que basta con abrir el modal cada vez que exista uno pendiente.
   useEffect(() => {
-    if (cpPendiente?.numero === 1 && modal !== 'checkpoint') setModal('checkpoint');
+    if (cpPendiente && modal !== 'checkpoint') {
+      setModal('checkpoint');
+    }
   }, [cpPendiente?.numero]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const cpEsObligatorio = cpPendiente?.numero === 1;
+  // Ya no depende del número de checkpoint: mientras haya uno pendiente,
+  // es obligatorio contestarlo — no se puede cerrar la ventana ni dar clic
+  // fuera del modal para saltárselo.
+  const cpEsObligatorio = !!cpPendiente;
 
   if (estado === 'cargando') {
     return (
@@ -712,6 +731,13 @@ export default function CaminoParticipanteHomePage() {
         {/* ============ Material del camino ============ */}
         <div>
           <div className="chh-section-label">Material del camino</div>
+          <a className="chh-material-item" href="#" onClick={(e) => { e.preventDefault(); navigate('/camino/participante/checkpoints'); }}>
+            <div className="chh-material-left">
+              <div className="chh-material-icon">🚩</div>
+              <div className="chh-material-title">Checkpoints del reto</div>
+            </div>
+            <div className="chh-material-cta">ABRIR →</div>
+          </a>
           <a className="chh-material-item" href="#" onClick={(e) => { e.preventDefault(); navigate('/camino/participante/bases'); }}>
             <div className="chh-material-left">
               <div className="chh-material-icon">📜</div>
@@ -789,6 +815,12 @@ export default function CaminoParticipanteHomePage() {
               <div className="chh-modal-title">🚩 Registrar Checkpoint {cpPendiente.numero}</div>
               {!cpEsObligatorio && (
                 <button className="chh-modal-close" onClick={() => setModal(null)}>✕</button>
+              )}
+            </div>
+            <div className="chh-cp-obligatorio">
+              ⚠️ Este checkpoint es <b>OBLIGATORIO</b> — no puedes seguir usando la plataforma sin contestarlo.
+              {diaActual > cpPendiente.dia && (
+                <> Se te pasó el día exacto (Día {cpPendiente.dia}), pero igual debes registrarlo ahora para continuar.</>
               )}
             </div>
             <p className="chh-modal-text" style={{ marginBottom: 14 }}>

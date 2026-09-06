@@ -32,6 +32,35 @@ const styles = `
 .cgp-root input[type=date]{background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:8px; padding:6px 10px; color:var(--text); font-family:'Cinzel',serif; font-size:11px;}
 .cgp-root select{color-scheme:dark;}
 .cgp-root select option{background:#150d28; color:#f0eaff;}
+
+/* ---------- Menú desplegable de Herramientas de Gestor ---------- */
+.cgp-menu-wrap{ position:relative; }
+.cgp-menu-btn{
+  padding:10px 16px; background:rgba(212,175,55,0.1); border:1px solid var(--border); border-radius:10px;
+  color:var(--gold); font-family:'Cinzel',serif; font-weight:700; font-size:10.5px; letter-spacing:0.8px;
+  cursor:pointer; display:inline-flex; align-items:center; gap:8px; white-space:nowrap;
+  transition:border-color .15s, background .15s;
+}
+.cgp-menu-btn:hover, .cgp-menu-btn.cgp-menu-abierto{ border-color:var(--borderHi); background:rgba(212,175,55,0.16); }
+.cgp-menu-chevron{ font-size:8px; transition:transform .15s; }
+.cgp-menu-btn.cgp-menu-abierto .cgp-menu-chevron{ transform:rotate(180deg); }
+.cgp-menu-backdrop{ position:fixed; inset:0; z-index:40; }
+.cgp-menu-dropdown{
+  position:absolute; top:calc(100% + 8px); left:0; z-index:50; min-width:230px;
+  background:var(--card); border:1px solid var(--borderHi); border-radius:12px; padding:6px;
+  box-shadow:0 12px 30px rgba(0,0,0,0.45); display:flex; flex-direction:column; gap:2px;
+}
+.cgp-menu-item{
+  display:flex; align-items:center; gap:9px; width:100%; text-align:left;
+  padding:10px 12px; border-radius:8px; border:none; background:transparent; cursor:pointer;
+  color:var(--text); font-family:'Nunito',sans-serif; font-weight:700; font-size:12.5px;
+  transition:background .12s;
+}
+.cgp-menu-item:hover{ background:rgba(255,255,255,0.06); }
+.cgp-menu-item.cgp-menu-item-activo{ background:rgba(212,175,55,0.14); color:var(--gold-bright); }
+.cgp-menu-vacio{
+  padding:10px 12px; font-family:'Nunito',sans-serif; font-size:11.5px; color:var(--muted); line-height:1.5;
+}
 `;
 
 function copiar(texto) { navigator.clipboard?.writeText(texto).catch(() => {}); }
@@ -52,6 +81,19 @@ export default function CaminoGestorPanelPage() {
   const [nuevoNombre, setNuevoNombre] = useState('');
   const [nuevoTelefono, setNuevoTelefono] = useState('');
   const [agregando, setAgregando] = useState(false);
+
+  // ---- Menú desplegable "Herramientas de Gestor" ----
+  // Aquí se van a ir agregando, a futuro, las nuevas opciones que se vayan
+  // creando para el apartado de gestor (ej. registro de usuarios con sus
+  // checkpoints, etc.), en vez de ir apilando tarjetas/botones sueltos en
+  // el panel. Por ahora solo trae la opción de Métricas que ya existía.
+  const OPCIONES_MENU_GESTOR = [
+    { key: 'metricas', label: '📊 Métricas del equipo' },
+    // Próximas opciones van aquí, ej:
+    // { key: 'registro_usuarios', label: '🗂️ Registro de usuarios' },
+  ];
+  const [menuGestorAbierto, setMenuGestorAbierto] = useState(false);
+  const [seccionGestorActiva, setSeccionGestorActiva] = useState('metricas');
 
   const BASE_URL = window.location.origin;
 
@@ -185,6 +227,32 @@ export default function CaminoGestorPanelPage() {
             <CaminoModoToggle modo="gestor" />
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <div className="cgp-menu-wrap">
+              <button
+                className={`cgp-menu-btn${menuGestorAbierto ? ' cgp-menu-abierto' : ''}`}
+                onClick={() => setMenuGestorAbierto(v => !v)}
+              >
+                ⚙️ HERRAMIENTAS DE GESTOR <span className="cgp-menu-chevron">▼</span>
+              </button>
+              {menuGestorAbierto && (
+                <>
+                  <div className="cgp-menu-backdrop" onClick={() => setMenuGestorAbierto(false)} />
+                  <div className="cgp-menu-dropdown">
+                    {OPCIONES_MENU_GESTOR.length === 0 ? (
+                      <div className="cgp-menu-vacio">Todavía no hay opciones aquí.</div>
+                    ) : OPCIONES_MENU_GESTOR.map(op => (
+                      <button
+                        key={op.key}
+                        className={`cgp-menu-item${seccionGestorActiva === op.key ? ' cgp-menu-item-activo' : ''}`}
+                        onClick={() => { setSeccionGestorActiva(op.key); setMenuGestorAbierto(false); }}
+                      >
+                        {op.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
             <a href="https://propotienda.com/hub" className="cgp-btn-enlace">🏛️ IR AL HUB</a>
             <a href="https://propotienda.com/admin" className="cgp-btn-enlace">🔐 IR A ADMIN</a>
             <a href="https://camino.propotienda.com/camino/participante/pasaporte" className="cgp-btn-enlace">📜 VER PASAPORTE</a>
@@ -197,10 +265,12 @@ export default function CaminoGestorPanelPage() {
           </div>
         </div>
 
-        <div className="cgp-tarjeta">
-          <h2 className="cgp-titulo-tarjeta">📊 MÉTRICAS DE TU EQUIPO</h2>
-          <CaminoGestorMetricasBlock />
-        </div>
+        {seccionGestorActiva === 'metricas' && (
+          <div className="cgp-tarjeta">
+            <h2 className="cgp-titulo-tarjeta">📊 MÉTRICAS DE TU EQUIPO</h2>
+            <CaminoGestorMetricasBlock />
+          </div>
+        )}
 
         <div className="cgp-tarjeta">
           <h2 className="cgp-titulo-tarjeta">🗺️ INTERESADOS</h2>

@@ -15,6 +15,7 @@ const CaminoParticipanteBasesPage = lazy(() => import('./features/camino/CaminoP
 const CaminoParticipanteRankingPage = lazy(() => import('./features/camino/CaminoParticipanteRankingPage'));
 const CaminoParticipanteArmeriaPage = lazy(() => import('./features/camino/CaminoParticipanteArmeriaPage'));
 const CaminoParticipanteOnboardingPage = lazy(() => import('./features/camino/CaminoParticipanteOnboardingPage'));
+const CaminoParticipanteCheckpointsPage = lazy(() => import('./features/camino/CaminoParticipanteCheckpointsPage'));
 const CaminoInstalarPage = lazy(() => import('./features/camino/CaminoInstalarPage'));
 
 export default function App() {
@@ -39,6 +40,7 @@ export default function App() {
           <Route path="/camino/participante/ranking" element={<CaminoParticipanteRankingPage />} />
           <Route path="/camino/participante/armeria" element={<CaminoParticipanteArmeriaPage />} />
           <Route path="/camino/participante/onboarding" element={<CaminoParticipanteOnboardingPage />} />
+          <Route path="/camino/participante/checkpoints" element={<CaminoParticipanteCheckpointsPage />} />
           <Route path="/camino/instalar" element={<CaminoInstalarPage />} />
 
           {/* Cualquier otra cosa -> landing, nunca a un login ajeno */}
