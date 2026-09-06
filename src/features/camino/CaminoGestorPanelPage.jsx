@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import CaminoVideoUploader from './CaminoVideoUploader';
 import CaminoGestorMetricasBlock from './CaminoGestorMetricasBlock';
+import CaminoGestorRegistroUsuarios from './CaminoGestorRegistroUsuarios';
 import CaminoModoToggle from './CaminoModoToggle';
 
 const styles = `
@@ -89,8 +90,8 @@ export default function CaminoGestorPanelPage() {
   // el panel. Por ahora solo trae la opción de Métricas que ya existía.
   const OPCIONES_MENU_GESTOR = [
     { key: 'metricas', label: '📊 Métricas del equipo' },
-    // Próximas opciones van aquí, ej:
-    // { key: 'registro_usuarios', label: '🗂️ Registro de usuarios' },
+    { key: 'registro_usuarios', label: '🗂️ Registro de usuarios' },
+    // Próximas opciones se agregan aquí siguiendo el mismo patrón.
   ];
   const [menuGestorAbierto, setMenuGestorAbierto] = useState(false);
   const [seccionGestorActiva, setSeccionGestorActiva] = useState('metricas');
@@ -269,6 +270,16 @@ export default function CaminoGestorPanelPage() {
           <div className="cgp-tarjeta">
             <h2 className="cgp-titulo-tarjeta">📊 MÉTRICAS DE TU EQUIPO</h2>
             <CaminoGestorMetricasBlock />
+          </div>
+        )}
+
+        {seccionGestorActiva === 'registro_usuarios' && (
+          <div className="cgp-tarjeta">
+            <h2 className="cgp-titulo-tarjeta">🗂️ REGISTRO DE USUARIOS</h2>
+            <p style={{ color: 'var(--muted)', fontSize: 11.5, marginBottom: 16 }}>
+              Todos tus participantes, sus checkpoints (seguidores, alcance e interacciones) y todo lo que registran durante su reto de 28 días. Da clic en cualquiera para ver su ficha completa.
+            </p>
+            <CaminoGestorRegistroUsuarios />
           </div>
         )}
 

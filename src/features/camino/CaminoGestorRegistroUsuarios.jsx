@@ -304,13 +304,6 @@ h1.chh-title{font-family:'Cinzel Decorative',serif; font-weight:900; font-size:c
 .chh-msg-ok{color:var(--green); font-size:12.5px; margin-top:8px;}
 .chh-msg-error{color:var(--red); font-size:12.5px; margin-top:8px;}
 
-.chh-cp-obligatorio{
-  display:flex; align-items:flex-start; gap:8px; margin-bottom:14px; padding:11px 14px;
-  border-radius:10px; background:rgba(255,196,68,0.08); border:1px solid rgba(255,196,68,0.35);
-  font-family:'Nunito',sans-serif; font-size:12.5px; line-height:1.55; color:#ffe3a0;
-}
-.chh-cp-obligatorio b{color:#ffc444;}
-
 @media (max-width:760px){
   .chh-topnav{padding:8px 14px;}
   .chh-nav-links{gap:10px;}
@@ -458,24 +451,15 @@ export default function CaminoParticipanteHomePage() {
   }
   const cpPendiente = checkpointPendiente();
 
-  // CUALQUIER checkpoint pendiente (1, 2 o 3) es obligatorio ANTES de seguir
-  // usando la plataforma — se abre solo, no se puede cerrar ni tachar sin
-  // contestar, y esto aplica siempre, sin importar si el usuario entró el
-  // día exacto del checkpoint o varios días después (ej. iba en el día 13,
-  // no entró el día 14, y volvió hasta el día 16 — igual le debe aparecer).
-  // checkpointPendiente() ya revisa hacia atrás y siempre regresa el
-  // checkpoint más reciente que el participante todavía no ha registrado,
-  // así que basta con abrir el modal cada vez que exista uno pendiente.
+  // El Checkpoint 1 (Día 1) es obligatorio ANTES de usar la plataforma —
+  // se abre solo y no se puede cerrar hasta que lo registre.
   useEffect(() => {
-    if (cpPendiente && modal !== 'checkpoint') {
+    if (cpPendiente && (cpPendiente.numero === 1 || searchParams.get('abrir') === 'checkpoint') && modal !== 'checkpoint') {
       setModal('checkpoint');
     }
   }, [cpPendiente?.numero]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Ya no depende del número de checkpoint: mientras haya uno pendiente,
-  // es obligatorio contestarlo — no se puede cerrar la ventana ni dar clic
-  // fuera del modal para saltárselo.
-  const cpEsObligatorio = !!cpPendiente;
+  const cpEsObligatorio = cpPendiente?.numero === 1;
 
   if (estado === 'cargando') {
     return (
@@ -618,7 +602,7 @@ export default function CaminoParticipanteHomePage() {
             {videoHoy?.video_estado === 'listo' && videoHoy?.video_id ? (
               <div className="chh-hoy-video">
                 <iframe
-                  src={`https://iframe.mediadelivery.net/embed/${BUNNY_LIBRARY_ID}/${videoHoy.video_id}?autoplay=false&muted=false&preload=false`}
+                  src={`https://iframe.mediadelivery.net/embed/${BUNNY_LIBRARY_ID}/${videoHoy.video_id}`}
                   loading="lazy"
                   allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
                   allowFullScreen
@@ -815,12 +799,6 @@ export default function CaminoParticipanteHomePage() {
               <div className="chh-modal-title">🚩 Registrar Checkpoint {cpPendiente.numero}</div>
               {!cpEsObligatorio && (
                 <button className="chh-modal-close" onClick={() => setModal(null)}>✕</button>
-              )}
-            </div>
-            <div className="chh-cp-obligatorio">
-              ⚠️ Este checkpoint es <b>OBLIGATORIO</b> — no puedes seguir usando la plataforma sin contestarlo.
-              {diaActual > cpPendiente.dia && (
-                <> Se te pasó el día exacto (Día {cpPendiente.dia}), pero igual debes registrarlo ahora para continuar.</>
               )}
             </div>
             <p className="chh-modal-text" style={{ marginBottom: 14 }}>
