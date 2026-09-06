@@ -311,6 +311,27 @@ h1.chh-title{font-family:'Cinzel Decorative',serif; font-weight:900; font-size:c
 }
 .chh-cp-obligatorio b{color:#ffc444;}
 
+.chh-cp-evidencia-titulo{
+  font-family:'Cinzel',serif; font-weight:700; font-size:10.5px; letter-spacing:0.5px; color:var(--gold-bright,#FFE566);
+  text-transform:uppercase; margin:16px 0 8px;
+}
+.chh-cp-evidencia-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:6px; }
+@media (max-width:480px){ .chh-cp-evidencia-grid{ grid-template-columns:1fr; } }
+.chh-cp-evidencia-slot{
+  display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer;
+  border:1.5px dashed rgba(212,175,55,0.35); border-radius:10px; padding:10px 8px;
+  background:rgba(255,255,255,0.02); transition:border-color .15s, background .15s;
+}
+.chh-cp-evidencia-slot:hover{ border-color:rgba(212,175,55,0.7); background:rgba(212,175,55,0.05); }
+.chh-cp-evidencia-vacio{
+  width:100%; height:64px; display:flex; align-items:center; justify-content:center;
+  font-size:22px; color:rgba(212,175,55,0.5); border-radius:8px; background:rgba(255,255,255,0.03);
+}
+.chh-cp-evidencia-preview{ width:100%; height:64px; object-fit:cover; border-radius:8px; }
+.chh-cp-evidencia-label{
+  font-family:'Nunito',sans-serif; font-size:9.5px; color:rgba(200,185,240,0.7); text-align:center; line-height:1.3;
+}
+
 @media (max-width:760px){
   .chh-topnav{padding:8px 14px;}
   .chh-nav-links{gap:10px;}
@@ -353,6 +374,9 @@ export default function CaminoParticipanteHomePage() {
   const [cpEnviando, setCpEnviando] = useState(false);
   const [cpMsgOk, setCpMsgOk] = useState('');
   const [cpMsgError, setCpMsgError] = useState('');
+  // Evidencia del checkpoint: 1 foto específica por métrica (seguidores, alcance,
+  // interacciones) — máximo 3 en total. Cada slot: null | { previewUrl, subiendo, urlSubida }
+  const [cpCapturas, setCpCapturas] = useState({ seguidores: null, alcance: null, interacciones: null });
 
   useEffect(() => {
     const n = window.innerWidth < 760 ? 30 : 60;
@@ -513,11 +537,77 @@ export default function CaminoParticipanteHomePage() {
   // llega vacío.
   const formatoParaGuion = FORMATOS_POR_DIA[diaActual] || formatoNombre;
 
+  // Redimensiona a máx. 1280px de ancho y comprime a JPEG ~72% — una captura de
+  // pantalla normal queda entre 100-300 KB en vez de varios MB, sin perder que se
+  // lean bien los números. Todo pasa en el dispositivo del participante.
+  function comprimirImagen(archivo) {
+    return new Promise((resolve, reject) => {
+      const lector = new FileReader();
+      lector.onerror = () => reject(new Error('No se pudo leer la imagen'));
+      lector.onload = (e) => {
+        const img = new Image();
+        img.onerror = () => reject(new Error('Archivo de imagen inválido'));
+        img.onload = () => {
+          const ANCHO_MAX = 1280;
+          let { width, height } = img;
+          if (width > ANCHO_MAX) {
+            height = Math.round((height * ANCHO_MAX) / width);
+            width = ANCHO_MAX;
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+          canvas.toBlob(
+            (blob) => (blob ? resolve(blob) : reject(new Error('No se pudo comprimir la imagen'))),
+            'image/jpeg',
+            0.72
+          );
+        };
+        img.src = e.target.result;
+      };
+      lector.readAsDataURL(archivo);
+    });
+  }
+
+  async function subirCapturaCheckpoint(slot, archivo) {
+    if (!archivo || !cpPendiente) return;
+    if (!archivo.type.startsWith('image/')) {
+      setCpMsgError('Ese archivo no es una imagen.');
+      return;
+    }
+    setCpMsgError('');
+    setCpCapturas((prev) => ({ ...prev, [slot]: { previewUrl: prev[slot]?.previewUrl || null, subiendo: true, urlSubida: null } }));
+    try {
+      const blobComprimido = await comprimirImagen(archivo);
+      const previewUrl = URL.createObjectURL(blobComprimido);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const uid = sessionData?.session?.user?.id;
+      if (!uid) throw new Error('Sin sesión');
+
+      const rutaArchivo = `${uid}/checkpoint-${cpPendiente.numero}/${slot}.jpg`;
+      const { error: errorSubida } = await supabase.storage
+        .from('evidencia-camino')
+        .upload(rutaArchivo, blobComprimido, { contentType: 'image/jpeg', upsert: true });
+      if (errorSubida) throw errorSubida;
+
+      const { data: urlData } = supabase.storage.from('evidencia-camino').getPublicUrl(rutaArchivo);
+      setCpCapturas((prev) => ({ ...prev, [slot]: { previewUrl, subiendo: false, urlSubida: urlData.publicUrl } }));
+    } catch (e) {
+      setCpCapturas((prev) => ({ ...prev, [slot]: null }));
+      setCpMsgError('No se pudo subir esa foto. Intenta de nuevo.');
+    }
+  }
+
   async function enviarCheckpoint() {
     setCpMsgError(''); setCpMsgOk('');
     if (!cpPendiente) return;
     if (cpSeguidores === '' || cpAlcance === '' || cpInteracciones === '') {
       setCpMsgError('Completa los 3 datos: seguidores, alcance e interacciones.');
+      return;
+    }
+    if (!cpCapturas.seguidores?.urlSubida || !cpCapturas.alcance?.urlSubida || !cpCapturas.interacciones?.urlSubida) {
+      setCpMsgError('Sube las 3 capturas de evidencia: seguidores, alcance e interacciones.');
       return;
     }
     setCpEnviando(true);
@@ -528,6 +618,7 @@ export default function CaminoParticipanteHomePage() {
         p_seguidores: Number(cpSeguidores),
         p_alcance: Number(cpAlcance),
         p_interacciones: Number(cpInteracciones),
+        p_capturas_url: [cpCapturas.seguidores.urlSubida, cpCapturas.alcance.urlSubida, cpCapturas.interacciones.urlSubida],
       });
       if (error) throw error;
 
@@ -535,6 +626,7 @@ export default function CaminoParticipanteHomePage() {
       setCpSeguidores('');
       setCpAlcance('');
       setCpInteracciones('');
+      setCpCapturas({ seguidores: null, alcance: null, interacciones: null });
       const { data: rachaData } = await supabase.rpc('camino_mi_racha');
       if (rachaData && rachaData.length > 0) setRacha(rachaData[0]);
       setTimeout(() => setModal(null), 1200);
@@ -838,7 +930,37 @@ export default function CaminoParticipanteHomePage() {
               <label>Interacciones (likes + comentarios + compartidos)</label>
               <input className="chh-input-text" type="number" min="0" inputMode="numeric" value={cpInteracciones} onChange={(e) => setCpInteracciones(e.target.value)} placeholder="Ej. 320" />
             </div>
-            <button className="chh-btn" disabled={cpEnviando} onClick={enviarCheckpoint}>
+
+            <div className="chh-cp-evidencia-titulo">📸 Evidencia (obligatoria) — sube 1 captura de pantalla de cada métrica</div>
+            <div className="chh-cp-evidencia-grid">
+              {[
+                { slot: 'seguidores', label: 'Captura de tus seguidores' },
+                { slot: 'alcance', label: 'Captura de tu alcance' },
+                { slot: 'interacciones', label: 'Captura de tus interacciones' },
+              ].map(({ slot, label }) => {
+                const c = cpCapturas[slot];
+                return (
+                  <label key={slot} className="chh-cp-evidencia-slot">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) subirCapturaCheckpoint(slot, f); }}
+                    />
+                    {c?.previewUrl ? (
+                      <img className="chh-cp-evidencia-preview" src={c.previewUrl} alt={label} />
+                    ) : (
+                      <div className="chh-cp-evidencia-vacio">＋</div>
+                    )}
+                    <div className="chh-cp-evidencia-label">
+                      {c?.subiendo ? 'Subiendo...' : c?.urlSubida ? '✓ ' + label : label}
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+
+            <button className="chh-btn" disabled={cpEnviando || cpCapturas.seguidores?.subiendo || cpCapturas.alcance?.subiendo || cpCapturas.interacciones?.subiendo} onClick={enviarCheckpoint}>
               {cpEnviando ? 'REGISTRANDO...' : 'REGISTRAR CHECKPOINT'}
             </button>
             {cpMsgOk && <p className="chh-msg-ok">{cpMsgOk}</p>}

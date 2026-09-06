@@ -99,6 +99,24 @@ const styles = `
 .cru-cp-card-fila span:first-child{ color:var(--muted); }
 .cru-cp-card-vacio{ font-family:'Nunito',sans-serif; font-size:11px; color:var(--muted); font-style:italic; }
 
+.cru-cp-evidencia-titulo{
+  font-family:'Cinzel',serif; font-size:8.5px; letter-spacing:0.6px; color:var(--muted); text-transform:uppercase;
+  margin-top:8px; margin-bottom:5px;
+}
+.cru-cp-evidencia-row{ display:flex; gap:6px; }
+.cru-cp-evidencia-badge{
+  width:26px; height:26px; border-radius:50%; flex-shrink:0;
+  font-family:'Cinzel',serif; font-weight:900; font-size:10px;
+  border:1.5px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.02); color:rgba(255,255,255,0.25);
+  cursor:default;
+}
+.cru-cp-evidencia-badge.disponible{
+  border-color:var(--gold); color:var(--gold-bright); background:rgba(212,175,55,0.12); cursor:pointer;
+  transition:transform .12s, background .12s;
+}
+.cru-cp-evidencia-badge.disponible:hover{ background:rgba(212,175,55,0.22); transform:scale(1.08); }
+.cru-cp-evidencia-badge.disponible:active{ transform:scale(0.94); }
+
 .cru-transform-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
 @media (max-width:600px){ .cru-transform-grid{ grid-template-columns:1fr; } }
 .cru-transform-card{
@@ -130,6 +148,27 @@ const styles = `
 
 const DIAS_CHECKPOINT = { 1: 1, 2: 14, 3: 28 };
 const NOMBRE_CHECKPOINT = { 1: 'Día 1', 2: 'Día 14', 3: 'Día 28' };
+// Orden fijo en que el participante sube su evidencia — debe coincidir con el
+// arreglo p_capturas_url que arma CaminoParticipanteHomePage.jsx al enviar el checkpoint.
+const ETIQUETAS_CAPTURA = ['Seguidores', 'Alcance', 'Interacciones'];
+
+async function descargarImagen(url, nombreArchivo) {
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('No se pudo descargar');
+    const blob = await resp.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objectUrl;
+    a.download = nombreArchivo;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 4000);
+  } catch (e) {
+    window.open(url, '_blank');
+  }
+}
 
 const FILTROS = [
   { key: 'todos', label: 'TODOS' },
@@ -307,6 +346,24 @@ export default function CaminoGestorRegistroUsuarios() {
                         <div className="cru-cp-card-fila"><span>Alcance</span><span>{cp.alcance}</span></div>
                         <div className="cru-cp-card-fila"><span>Interacciones</span><span>{cp.interacciones}</span></div>
                         <div className="cru-cp-card-fila"><span>Registrado</span><span>{fmtFecha(cp.created_at)}</span></div>
+                        <div className="cru-cp-evidencia-titulo">Evidencia</div>
+                        <div className="cru-cp-evidencia-row">
+                          {[0, 1, 2].map(i => {
+                            const url = cp.capturas_url?.[i];
+                            const nombreArchivo = `${seleccionado.nombre.replace(/\s+/g, '_')}_checkpoint${numero}_${ETIQUETAS_CAPTURA[i].toLowerCase()}.jpg`;
+                            return (
+                              <button
+                                key={i}
+                                className={`cru-cp-evidencia-badge${url ? ' disponible' : ''}`}
+                                disabled={!url}
+                                title={url ? `Descargar captura de ${ETIQUETAS_CAPTURA[i]}` : `Sin captura de ${ETIQUETAS_CAPTURA[i]}`}
+                                onClick={() => url && descargarImagen(url, nombreArchivo)}
+                              >
+                                {i + 1}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </>
                     ) : (
                       <div className="cru-cp-card-vacio">Todavía no lo registra.</div>
