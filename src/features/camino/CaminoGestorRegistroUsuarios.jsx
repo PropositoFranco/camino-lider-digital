@@ -41,6 +41,18 @@ const styles = `
 .cru-search::placeholder{ color:var(--muted); }
 
 .cru-lista{ display:flex; flex-direction:column; gap:8px; }
+
+/* ---------- Scrollbar oscura y delgada (estilo Claude) ---------- */
+.cru-scroll{
+  overflow-y:auto; padding-right:6px;
+  scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.18) transparent;
+}
+.cru-scroll::-webkit-scrollbar{ width:8px; }
+.cru-scroll::-webkit-scrollbar-track{ background:transparent; }
+.cru-scroll::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.18); border-radius:8px; }
+.cru-scroll::-webkit-scrollbar-thumb:hover{ background:rgba(255,255,255,0.32); }
+/* Lista de participantes: alto fijo ~5 filas visibles, el resto con scroll */
+.cru-lista-scroll{ max-height:400px; }
 .cru-fila{
   display:flex; align-items:center; gap:14px; text-align:left; width:100%; cursor:pointer;
   background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:12px; padding:12px 14px;
@@ -282,7 +294,7 @@ export default function CaminoGestorRegistroUsuarios() {
         />
       </div>
 
-      <div className="cru-lista">
+      <div className="cru-lista cru-scroll cru-lista-scroll">
         {filtrados.length === 0 ? (
           <div className="cru-vacio">
             {datos.length === 0

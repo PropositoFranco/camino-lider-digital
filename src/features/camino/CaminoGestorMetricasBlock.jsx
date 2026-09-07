@@ -71,6 +71,61 @@ const styles = `
 
 .cgm-vacio{ text-align:center; padding:28px 16px; color:var(--muted); font-size:12.5px; line-height:1.6; }
 .cgm-loading{ text-align:center; padding:24px; color:var(--muted); font-family:'Cinzel',serif; font-size:11px; letter-spacing:1px; }
+
+/* ---------- Scrollbar oscura y delgada (estilo Claude), reutilizable ---------- */
+.cgm-scroll{
+  overflow-y:auto; padding-right:6px;
+  scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.18) transparent;
+}
+.cgm-scroll::-webkit-scrollbar{ width:8px; }
+.cgm-scroll::-webkit-scrollbar-track{ background:transparent; }
+.cgm-scroll::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.18); border-radius:8px; }
+.cgm-scroll::-webkit-scrollbar-thumb:hover{ background:rgba(255,255,255,0.32); }
+
+/* Lista de participantes: alto fijo ~5 filas visibles, el resto con scroll */
+.cgm-tabla-scroll{ max-height:400px; }
+
+.cgm-fila-p{ cursor:pointer; text-align:left; width:100%; transition:border-color .15s, background .15s; appearance:none; margin:0; font-family:inherit; color:inherit; }
+.cgm-fila-p:hover{ background:rgba(255,255,255,0.055); border-color:var(--borderHi); }
+
+/* ---------- Modal de detalle del participante ---------- */
+.cgm-modal-fondo{
+  position:fixed; inset:0; background:rgba(4,2,14,0.88); z-index:9999;
+  display:flex; align-items:center; justify-content:center; padding:20px; overflow-y:auto;
+}
+.cgm-modal{
+  background:var(--card); border:1.5px solid var(--borderHi); border-radius:18px;
+  max-width:680px; width:100%; max-height:88vh; overflow-y:auto; padding:26px 24px; margin:auto;
+}
+.cgm-modal-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:16px; }
+.cgm-modal-nombre{ font-family:'Cinzel',serif; font-weight:900; font-size:19px; color:var(--text); }
+.cgm-modal-sub{ font-family:'Nunito',sans-serif; font-size:11.5px; color:var(--muted); margin-top:3px; }
+.cgm-modal-cerrar{
+  background:none; border:1px solid var(--border); color:var(--muted); border-radius:8px;
+  width:30px; height:30px; cursor:pointer; font-size:15px; flex-shrink:0;
+}
+.cgm-modal-cerrar:hover{ color:var(--gold-bright); border-color:var(--gold); }
+
+.cgm-sec-titulo{
+  font-family:'Cinzel',serif; font-weight:900; font-size:11px; letter-spacing:1.2px; color:var(--gold);
+  text-transform:uppercase; margin:20px 0 10px;
+}
+.cgm-sec-titulo:first-of-type{ margin-top:0; }
+
+.cgm-dias-scroll{ max-height:340px; display:flex; flex-direction:column; gap:6px; }
+.cgm-dia-fila{
+  display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:10px;
+  background:rgba(255,255,255,0.03); border:1px solid var(--border); border-left:3px solid var(--muted);
+}
+.cgm-dia-fila.cumplido{ border-left-color:var(--green); }
+.cgm-dia-fila.pendiente{ border-left-color:var(--red); opacity:0.75; }
+.cgm-dia-num{ font-family:'Cinzel',serif; font-weight:700; font-size:11px; color:var(--text); flex-shrink:0; width:52px; }
+.cgm-dia-check{ font-size:13px; flex-shrink:0; }
+.cgm-dia-meta{ font-family:'Nunito',sans-serif; font-size:11px; color:var(--muted); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cgm-dia-link{ font-family:'Cinzel',serif; font-size:9.5px; color:var(--gold); text-decoration:none; flex-shrink:0; }
+.cgm-dia-link:hover{ color:var(--gold-bright); }
+
+.cgm-modal-loading{ text-align:center; padding:40px 16px; color:var(--muted); font-family:'Cinzel',serif; font-size:11px; letter-spacing:1px; }
 `;
 
 const FILTROS = [
@@ -90,6 +145,10 @@ export default function CaminoGestorMetricasBlock() {
   const [filtro, setFiltro] = useState('todos');
   const [busqueda, setBusqueda] = useState('');
 
+  const [seleccionado, setSeleccionado] = useState(null); // fila del participante
+  const [detalle, setDetalle] = useState(null);
+  const [detalleEstado, setDetalleEstado] = useState('cargando'); // cargando | listo | error
+
   async function cargar() {
     setEstado('cargando');
     const { data, error } = await supabase.rpc('camino_metricas_gestor');
@@ -99,6 +158,16 @@ export default function CaminoGestorMetricasBlock() {
   }
 
   useEffect(() => { cargar(); }, []);
+
+  async function abrirDetalle(fila) {
+    setSeleccionado(fila);
+    setDetalle(null);
+    setDetalleEstado('cargando');
+    const { data, error } = await supabase.rpc('camino_gestor_detalle_participante', { p_participante_id: fila.participante_id });
+    if (error) { setDetalleEstado('error'); return; }
+    setDetalle(data);
+    setDetalleEstado('listo');
+  }
 
   const resumen = useMemo(() => {
     const total = datos.length;
@@ -205,7 +274,7 @@ export default function CaminoGestorMetricasBlock() {
         />
       </div>
 
-      <div className="cgm-tabla">
+      <div className="cgm-tabla cgm-scroll cgm-tabla-scroll">
         {filtrados.length === 0 ? (
           <div className="cgm-vacio">
             {datos.length === 0
@@ -213,7 +282,7 @@ export default function CaminoGestorMetricasBlock() {
               : 'Ningún participante coincide con este filtro.'}
           </div>
         ) : filtrados.map(p => (
-          <div className={`cgm-fila-p ${p.estado}`} key={p.participante_id}>
+          <button className={`cgm-fila-p ${p.estado}`} key={p.participante_id} onClick={() => abrirDetalle(p)}>
             <div className="cgm-p-estado">{ESTADO_ICONO[p.estado]}</div>
             <div className="cgm-p-info">
               <div className="cgm-p-nombre">{p.nombre}</div>
@@ -237,9 +306,64 @@ export default function CaminoGestorMetricasBlock() {
             <div className="cgm-p-modulo1">
               <span className={`cgm-badge-modulo1 ${p.modulo1_estado}`}>{MODULO1_LABEL[p.modulo1_estado]}</span>
             </div>
-          </div>
+          </button>
         ))}
       </div>
+
+      {seleccionado && (
+        <div className="cgm-modal-fondo" onClick={() => setSeleccionado(null)}>
+          <div className="cgm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="cgm-modal-head">
+              <div>
+                <div className="cgm-modal-nombre">{seleccionado.nombre}</div>
+                <div className="cgm-modal-sub">
+                  Día {seleccionado.dia_actual} de 28 · Racha {seleccionado.racha_actual} 🔥 · Checklist {seleccionado.checklist_pct}% · +{seleccionado.seguidores_ganados} seguidores
+                </div>
+              </div>
+              <button className="cgm-modal-cerrar" onClick={() => setSeleccionado(null)}>✕</button>
+            </div>
+
+            {detalleEstado === 'cargando' && <div className="cgm-modal-loading">Cargando su historial completo...</div>}
+            {detalleEstado === 'error' && <div className="cgm-vacio">No se pudo cargar el historial de este participante.</div>}
+
+            {detalleEstado === 'listo' && detalle && (() => {
+              const checkinsPorDia = {};
+              (detalle.checkins || []).forEach(c => { checkinsPorDia[c.dia_numero] = c; });
+              const checklistPorDia = {};
+              (detalle.checklist || []).forEach(c => { checklistPorDia[c.dia_numero] = c; });
+              const dias = Array.from({ length: seleccionado.dia_actual }, (_, i) => i + 1);
+              const diasCumplidos = dias.filter(d => checkinsPorDia[d]).length;
+
+              return (
+                <>
+                  <div className="cgm-sec-titulo">
+                    📔 Día por día ({diasCumplidos} de {dias.length} cumplidos)
+                  </div>
+                  <div className="cgm-dias-scroll cgm-scroll">
+                    {dias.map(dia => {
+                      const checkin = checkinsPorDia[dia];
+                      const cl = checklistPorDia[dia];
+                      const checklistCompleto = cl && cl.gancho && cl.estructura && cl.legibilidad && cl.cta;
+                      return (
+                        <div key={dia} className={`cgm-dia-fila${checkin ? ' cumplido' : ' pendiente'}`}>
+                          <div className="cgm-dia-num">Día {dia}</div>
+                          <div className="cgm-dia-check">{checkin ? '✅' : '❌'}</div>
+                          <div className="cgm-dia-meta">
+                            {checkin
+                              ? `${checkin.formato || 'Sin formato'} · ${checkin.plataforma || 'Sin plataforma'}${cl ? (checklistCompleto ? ' · Checklist ✅' : ' · Checklist incompleto') : ''}`
+                              : 'No registrado'}
+                          </div>
+                          {checkin?.link_post && <a className="cgm-dia-link" href={checkin.link_post} target="_blank" rel="noreferrer">VER →</a>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
