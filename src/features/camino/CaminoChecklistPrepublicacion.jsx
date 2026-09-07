@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { supabaseCamino as supabase } from "../../services/supabaseCamino";
 
 const BANNER_URL =
@@ -163,7 +163,7 @@ const ITEMS = [
  * onCompletoChange(true) se dispara cuando las 4 casillas están activas —
  * úsalo para habilitar/deshabilitar el botón de enviar check-in.
  */
-export default function CaminoChecklistPrepublicacion({ diaNumero, onCompletoChange }) {
+export default function CaminoChecklistPrepublicacion({ diaNumero, onCompletoChange, resetToken = 0 }) {
   const [respuestas, setRespuestas] = useState({
     gancho: false,
     estructura: false,
@@ -181,6 +181,17 @@ export default function CaminoChecklistPrepublicacion({ diaNumero, onCompletoCha
     onCompletoChange?.(completo);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [completo]);
+
+  // ⚠️ Reinicio VISUAL únicamente: cuando el padre incrementa resetToken (después
+  // de registrar evidencia con éxito), desmarcamos las casillas en pantalla para
+  // que quede claro que ya se guardó y está listo para un nuevo registro — pero
+  // NO se reescribe la base de datos, así el historial real de ese día (usado en
+  // el detalle del gestor) se conserva intacto tal como el usuario lo completó.
+  const primerRenderReset = useRef(true);
+  useEffect(() => {
+    if (primerRenderReset.current) { primerRenderReset.current = false; return; }
+    setRespuestas({ gancho: false, estructura: false, legibilidad: false, cta: false });
+  }, [resetToken]);
 
   useEffect(() => {
     let activo = true;

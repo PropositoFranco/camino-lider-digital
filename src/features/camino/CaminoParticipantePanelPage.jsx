@@ -9,7 +9,7 @@ const styles = `
   --dark-bg:#04020e; --dark-surface:rgba(10,5,32,0.92);
   --purple:#CC44FF;
   --lilac:rgba(200,185,240,0.68); --lilac-dim:rgba(200,185,240,0.42);
-  --green:#44ff88; --red:#ff4466;
+  --green:#44ff88; --red:#ff4466; --blue:#3aa0ff;
 }
 .ctp-root *,.ctp-root *::before,.ctp-root *::after{margin:0;padding:0;box-sizing:border-box;}
 .ctp-root{
@@ -218,10 +218,34 @@ h1.ctp-title{font-family:'Cinzel Decorative',serif; font-weight:900; font-size:c
 .ctp-spinner{width:26px; height:26px; border:2.5px solid var(--gold-dim); border-top-color:var(--gold); border-radius:50%; animation:ctp-girar 0.8s linear infinite;}
 @keyframes ctp-girar{ to{ transform:rotate(360deg); } }
 .ctp-error-full .ctp-btn{max-width:260px;}
+
+/* ---------- Selector de día (elige qué día registrar, de los 28) ---------- */
+.ctp-calendario-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:6px;}
+.ctp-calendario-count{font-family:'Nunito',sans-serif; font-size:12px; color:var(--lilac);}
+.ctp-barra-dias{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:6px;}
+.ctp-dia-box{
+  position:relative; width:34px; height:34px; border-radius:9px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Cinzel',serif; font-weight:900; font-size:12px; color:#fff;
+  border:1.5px solid transparent; cursor:pointer; transition:transform .12s;
+}
+.ctp-dia-box:hover{ transform:translateY(-2px); }
+.ctp-dia-rojo{background:#c23652;}
+.ctp-dia-azul{background:var(--blue); box-shadow:0 0 0 2px rgba(58,160,255,0.35);}
+.ctp-dia-verde{background:#2f9e5c;}
+.ctp-dia-futuro{background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.55); border-color:rgba(255,255,255,0.08); cursor:default; pointer-events:none; opacity:0.5;}
+.ctp-dia-checkpoint{border-color:var(--gold-bright); box-shadow:0 0 8px rgba(255,229,102,0.5);}
+.ctp-dia-bandera{position:absolute; top:-9px; right:-6px; font-size:12px; transform:rotate(12deg);}
+.ctp-dia-seleccionado{ box-shadow:0 0 0 3px #fff inset, 0 0 10px rgba(255,255,255,0.6); transform:translateY(-2px); }
+.ctp-calendario-legend{font-family:'Nunito',sans-serif; font-size:11px; color:var(--lilac); margin-top:10px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;}
+.ctp-legend-item{display:flex; align-items:center; gap:5px;}
+.ctp-legend-dot{width:10px; height:10px; border-radius:3px; display:inline-block;}
 `;
 
 const FORMATOS = ['Reel', 'TikTok', 'Historia', 'Post', 'Carrusel'];
 const PLATAFORMAS = ['Instagram', 'TikTok', 'Facebook', 'YouTube'];
+const TOTAL_DIAS = 28;
+const DIAS_CHECKPOINT = [1, 14, 28];
 
 const NAV_ITEMS = [
   { label: 'Inicio', activo: false, disponible: true, ruta: '/camino/participante/home' },
@@ -272,6 +296,14 @@ export default function CaminoParticipantePanelPage() {
   const [msgOk, setMsgOk] = useState('');
   const [msgError, setMsgError] = useState('');
   const [checklistCompleto, setChecklistCompleto] = useState(false);
+  // Días ya registrados (para pintar el calendario) — misma fuente que usa Inicio.
+  const [racha, setRacha] = useState({ dias_registrados: [] });
+  // Día elegido a mano en el calendario de este apartado. null = todavía no ha
+  // tocado ningún día, así que se respeta el ?dia= de la URL o el día actual.
+  const [diaElegido, setDiaElegido] = useState(null);
+  // Se incrementa tras registrar evidencia con éxito, para reiniciar visualmente
+  // las casillas del checklist (sin tocar lo ya guardado en la base de datos).
+  const [resetToken, setResetToken] = useState(0);
 
   async function cargar() {
     const { data: sessionData } = await supabase.auth.getSession();
@@ -288,6 +320,10 @@ export default function CaminoParticipantePanelPage() {
     }
 
     setParticipante(data[0]);
+
+    const { data: rachaData } = await supabase.rpc('camino_mi_racha');
+    if (rachaData && rachaData.length > 0) setRacha(rachaData[0]);
+
     setEstado('listo');
   }
 
@@ -295,10 +331,19 @@ export default function CaminoParticipantePanelPage() {
 
   // ⚠️ NUEVO: si viene ?dia=N en la URL (y es un día ya vivido, no futuro), se usa ese.
   // Si no viene, o es inválido, se usa el día actual real del participante (comportamiento de siempre).
+  // Si el usuario elige un día a mano en el calendario de este apartado, eso manda sobre todo lo demás.
   const diaActualReal = participante?.dia_actual ?? 1;
   const diaParam = parseInt(searchParams.get('dia'), 10);
-  const diaSeleccionado = (!isNaN(diaParam) && diaParam >= 1 && diaParam <= diaActualReal) ? diaParam : diaActualReal;
+  const diaSeleccionado = diaElegido ?? ((!isNaN(diaParam) && diaParam >= 1 && diaParam <= diaActualReal) ? diaParam : diaActualReal);
   const esDiaAtrasado = diaSeleccionado !== diaActualReal;
+  const diasRegistrados = racha.dias_registrados || [];
+
+  function elegirDia(d) {
+    if (d > diaActualReal) return; // nunca días futuros
+    setMsgOk('');
+    setMsgError('');
+    setDiaElegido(d);
+  }
 
   async function enviarCheckin() {
     setMsgError('');
@@ -326,6 +371,10 @@ export default function CaminoParticipantePanelPage() {
     setEnviando(false);
     setMsgOk('¡Evidencia registrada! Sigue así, Templario.');
     setLinkPost('');
+    setResetToken((t) => t + 1);
+
+    const { data: rachaData } = await supabase.rpc('camino_mi_racha');
+    if (rachaData && rachaData.length > 0) setRacha(rachaData[0]);
   }
 
   async function salir() {
@@ -394,9 +443,47 @@ export default function CaminoParticipantePanelPage() {
       </div>
 
       <div className="ctp-wrap">
+        <div className="ctp-card">
+          <div className="ctp-calendario-head">
+            <div className="ctp-section-label" style={{ marginBottom: 0 }}>📅 Elige el día que quieres registrar</div>
+            <div className="ctp-calendario-count">{diasRegistrados.length}/{TOTAL_DIAS} días</div>
+          </div>
+          <p className="ctp-help-text" style={{ borderBottom: 'none', paddingBottom: 0, marginBottom: 10 }}>
+            Puedes registrar tu día actual o cualquier día anterior que se te haya pasado. Los días futuros no se pueden elegir.
+          </p>
+          <div className="ctp-barra-dias">
+            {Array.from({ length: TOTAL_DIAS }, (_, i) => i + 1).map(d => {
+              const esCheckpoint = DIAS_CHECKPOINT.includes(d);
+              let clase = 'ctp-dia-futuro';
+              if (diasRegistrados.includes(d)) clase = 'ctp-dia-verde';
+              else if (d === diaActualReal) clase = 'ctp-dia-azul';
+              else if (d < diaActualReal) clase = 'ctp-dia-rojo';
+              const esSeleccionado = d === diaSeleccionado;
+              return (
+                <div
+                  key={d}
+                  className={`ctp-dia-box ${clase} ${esCheckpoint ? 'ctp-dia-checkpoint' : ''} ${esSeleccionado ? 'ctp-dia-seleccionado' : ''}`}
+                  onClick={() => elegirDia(d)}
+                  title={d > diaActualReal ? 'Todavía no llegas a este día' : `Registrar Día ${d}`}
+                >
+                  {d}
+                  {esCheckpoint && <span className="ctp-dia-bandera">🚩</span>}
+                </div>
+              );
+            })}
+          </div>
+          <div className="ctp-calendario-legend">
+            <span className="ctp-legend-item"><span className="ctp-legend-dot" style={{ background: '#2f9e5c' }} /> Registrado</span>
+            <span className="ctp-legend-item"><span className="ctp-legend-dot" style={{ background: 'var(--blue)' }} /> Día actual</span>
+            <span className="ctp-legend-item"><span className="ctp-legend-dot" style={{ background: '#c23652' }} /> Pendiente</span>
+            <span className="ctp-legend-item"><span className="ctp-legend-dot" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)' }} /> Aún no llega</span>
+          </div>
+        </div>
+
         <CaminoChecklistPrepublicacion
           diaNumero={diaActual}
           onCompletoChange={setChecklistCompleto}
+          resetToken={resetToken}
         />
 
         <div className="ctp-card">
