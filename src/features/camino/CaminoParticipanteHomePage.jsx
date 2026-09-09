@@ -155,6 +155,8 @@ h1.chh-title{font-family:'Cinzel Decorative',serif; font-weight:900; font-size:c
 .chh-btn:disabled{opacity:0.5; cursor:default;}
 .chh-btn-sm{padding:8px 16px; font-size:10.5px;}
 .chh-btn-outline{background:transparent;}
+.chh-btn-teal{border-color:#22d3ee; color:#22d3ee;}
+.chh-btn-teal:hover{background:rgba(34,211,238,0.12);}
 
 .chh-section-label{
   font-family:'Cinzel',serif; font-weight:900; font-size:15px; letter-spacing:0.3px;
@@ -737,6 +739,14 @@ export default function CaminoParticipanteHomePage() {
                   {fichaHoy.contenido && (<div className="chh-modal-section"><div className="chh-modal-label">Contenido</div><div className="chh-modal-text">{fichaHoy.contenido}</div></div>)}
                 </div>
               )}
+
+              <button
+                type="button"
+                className="chh-btn chh-btn-outline chh-hoy-full chh-btn-teal"
+                onClick={() => navigate('/camino/participante/teleprompter')}
+              >
+                🎥 TELEPROMPTER DEL TEMPLO
+              </button>
 
               <button className="chh-btn chh-hoy-full" style={{ marginTop: 12 }} onClick={() => navigate(`/camino/participante/panel?dia=${diaActual}`)}>📸 REGISTRAR EVIDENCIA DE HOY</button>
             </div>

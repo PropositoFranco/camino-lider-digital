@@ -168,6 +168,7 @@ function EstructuraRender({ texto }) {
 }
 
 function DayCard({ day, badge, format, desc, detalle, ficha }) {
+  const navigate = useNavigate();
   const meta = BADGE_META[badge];
   const [abierto, setAbierto] = useState(false);
   const [guionAbierto, setGuionAbierto] = useState(false);
@@ -262,6 +263,14 @@ function DayCard({ day, badge, format, desc, detalle, ficha }) {
           )}
         </>
       )}
+
+      <button
+        type="button"
+        className="teleprompter-btn"
+        onClick={() => navigate('/camino/participante/teleprompter')}
+      >
+        🎥 Teleprompter del Templo
+      </button>
     </div>
   );
 }
@@ -738,6 +747,13 @@ const CSS = `
   cursor:pointer; transition:background .2s, opacity .2s; opacity:0.9;
 }
 .calendario-camino-page .idea-btn:hover{opacity:1; background:rgba(204,68,255,0.14);}
+.calendario-camino-page .teleprompter-btn{
+  margin-top:2px; width:100%; display:flex; align-items:center; justify-content:center; gap:8px;
+  font-family:'Cinzel',serif; font-weight:900; font-size:11.5px; letter-spacing:0.4px; color:#22d3ee;
+  background:rgba(34,211,238,0.08); border:1px solid rgba(34,211,238,0.45); border-radius:9px; padding:9px 12px;
+  cursor:pointer; transition:background .2s, opacity .2s; opacity:0.9; text-decoration:none; box-sizing:border-box;
+}
+.calendario-camino-page .teleprompter-btn:hover{opacity:1; background:rgba(34,211,238,0.14);}
 .calendario-camino-page .idea-chevron{transition:transform .2s ease;}
 .calendario-camino-page .idea-chevron.open{transform:rotate(180deg);}
 .calendario-camino-page .idea-panel{
