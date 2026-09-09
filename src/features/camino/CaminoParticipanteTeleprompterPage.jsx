@@ -25,6 +25,7 @@ export default function CaminoParticipanteTeleprompterPage() {
   const navigate = useNavigate();
   const [cargando, setCargando] = useState(true);
   const [autorizado, setAutorizado] = useState(false);
+  const [herramientaAbierta, setHerramientaAbierta] = useState(false);
 
   useEffect(() => {
     let activo = true;
@@ -42,6 +43,22 @@ export default function CaminoParticipanteTeleprompterPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // El teleprompter (dentro del iframe) avisa por postMessage cuando el
+  // usuario entra o sale de su pantalla de cámara/lectura. Mientras esté
+  // abierta, escondemos el "← Volver" de afuera para que no se encimen dos
+  // botones de regreso — el único botón de regreso visible en esa pantalla
+  // es el propio del teleprompter, reubicado junto a los demás controles.
+  useEffect(() => {
+    function alRecibirMensaje(evento) {
+      const datos = evento.data;
+      if (!datos || datos.source !== 'propotp-teleprompter') return;
+      if (datos.type === 'open') setHerramientaAbierta(true);
+      else if (datos.type === 'close') setHerramientaAbierta(false);
+    }
+    window.addEventListener('message', alRecibirMensaje);
+    return () => window.removeEventListener('message', alRecibirMensaje);
+  }, []);
+
   if (cargando || !autorizado) {
     return (
       <div style={estilos.cargando}>
@@ -53,14 +70,16 @@ export default function CaminoParticipanteTeleprompterPage() {
 
   return (
     <div style={estilos.envoltorio}>
-      <button
-        onClick={() => navigate(-1)}
-        style={estilos.volver}
-        aria-label="Volver"
-        title="Volver"
-      >
-        ← Volver
-      </button>
+      {!herramientaAbierta && (
+        <button
+          onClick={() => navigate(-1)}
+          style={estilos.volver}
+          aria-label="Volver"
+          title="Volver"
+        >
+          ← Volver
+        </button>
+      )}
       <iframe
         title="Teleprompter del Templo"
         srcDoc={teleprompterHtml}
