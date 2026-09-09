@@ -1240,9 +1240,18 @@
       // cámara normal del dispositivo.
       const anchoPantalla = window.innerWidth || document.documentElement.clientWidth || 390;
       const altoPantalla = window.innerHeight || document.documentElement.clientHeight || 844;
+      const dpr = window.devicePixelRatio || 1;
+      // Pedimos ancho y alto explícitos (no solo la proporción) y en ese
+      // orden — ancho menor que alto — para forzar vertical de verdad.
+      // Solo pedir "aspectRatio" es ambiguo: el navegador puede satisfacer
+      // la misma proporción entregando el sensor nativo en horizontal, que
+      // es justo lo que estaba pasando (se veía bien en pantalla por el
+      // object-fit:cover, pero el archivo grabado salía horizontal).
       cameraStream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: 'user',
+          width: { ideal: Math.round(anchoPantalla * dpr) },
+          height: { ideal: Math.round(altoPantalla * dpr) },
           aspectRatio: { ideal: anchoPantalla / altoPantalla }
         },
         audio: true
