@@ -257,8 +257,8 @@ const NAV_ITEMS = [
   { label: 'Inicio', activo: false, disponible: true, ruta: '/camino/participante/home' },
   { label: 'Check-in', activo: false, disponible: true, ruta: '/camino/participante/panel' },
   { label: 'Calendario', activo: false, disponible: true, ruta: '/camino/participante/calendario' },
-  { label: 'Pasaporte del Templario', activo: false, disponible: true, ruta: '/camino/participante/pasaporte' },
   { label: 'Armería', activo: false, disponible: true, ruta: '/camino/participante/armeria' },
+  { label: 'Pasaporte del Templario', activo: false, disponible: true, ruta: '/camino/participante/pasaporte' },
   { label: 'Ranking', activo: true, disponible: true },
 ];
 
@@ -498,8 +498,11 @@ export default function CaminoParticipanteRankingPage() {
         <div className="crk-hero-frame">
           <img
             className="crk-hero-img"
-            src="https://hdwzhwuhlrtrmhnecypm.supabase.co/storage/v1/object/public/banners/camino/camino-ranking-banner.webp"
+            src="https://hdwzhwuhlrtrmhnecypm.supabase.co/storage/v1/render/image/public/banners/camino/camino-ranking-banner.webp?width=650&quality=70"
             alt="Ranking del Camino"
+            loading="eager"
+            decoding="async"
+            fetchpriority="high"
           />
           <div className="crk-hero-caption">
             <div className="crk-eyebrow-icon" style={{ width: 40, height: 40, fontSize: 18 }}>🏆</div>

@@ -216,13 +216,25 @@ const NAV_ITEMS = [
 
 const BUCKET = 'https://hdwzhwuhlrtrmhnecypm.supabase.co/storage/v1/object/public';
 
+// Igual que en Pasaporte del Templario: usamos el endpoint de transformación
+// de Supabase (render/image) en vez de object/public, para que el navegador
+// descargue una versión ya comprimida y redimensionada del archivo, no el
+// original pesado. Solo se limita el ANCHO (sin recortar ni forzar una
+// relación de aspecto distinta), así el recorte visual sigue siendo
+// exactamente el mismo que ya hace el CSS (object-fit / object-position) —
+// no cambia nada de cómo se ve, solo el peso del archivo que se descarga.
+const BUCKET_IMG = 'https://hdwzhwuhlrtrmhnecypm.supabase.co/storage/v1/render/image/public';
+const HERO_IMG_PARAMS = '?width=1000&quality=70';       // banner grande de arriba
+const CARD_COVER_PARAMS = '?width=600&quality=70';      // tarjetas tipo "banner" (cover)
+const CARD_CONTAIN_PARAMS = '?width=300&height=300&resize=contain&quality=70'; // logos/sellos (contain) — mismos parámetros ya probados en Pasaporte
+
 const BLOQUES = [
   {
     id: 'guiones',
     icono: '🪄',
     titulo: 'Generador de Guiones',
     desc: 'Toca tus temas del día, descarga tu Brief de Marca y arma tu guion con IA en menos de 1 minuto.',
-    imagen: `${BUCKET}/banners/camino/camino-calendario-banner.webp`,
+    imagen: `${BUCKET_IMG}/banners/camino/camino-calendario-banner.webp${CARD_COVER_PARAMS}`,
     imagenModo: 'cover',
     badge: null,
     cta: 'IR AL CALENDARIO →',
@@ -233,7 +245,7 @@ const BLOQUES = [
     icono: '🛡️',
     titulo: 'Checklist Pre-Publicación',
     desc: 'Las 4 preguntas que te haces antes de publicar: gancho, estructura, legibilidad y CTA.',
-    imagen: `${BUCKET}/banners/camino/camino-checkin-banner.webp`,
+    imagen: `${BUCKET_IMG}/banners/camino/camino-checkin-banner.webp${CARD_COVER_PARAMS}`,
     imagenModo: 'cover',
     badge: null,
     cta: 'IR AL CHECK-IN →',
@@ -244,7 +256,7 @@ const BLOQUES = [
     icono: '🎨',
     titulo: 'Kit Visual de Marca',
     desc: 'Logos, sellos del Templario y plantillas de portada listas para tus miniaturas y videos.',
-    imagen: `${BUCKET}/sorteos-assets/logo-minimalista.png`,
+    imagen: `${BUCKET_IMG}/sorteos-assets/logo-minimalista.png${CARD_CONTAIN_PARAMS}`,
     imagenModo: 'contain',
     badge: null,
     cta: 'VER KIT →',
@@ -256,7 +268,7 @@ const BLOQUES = [
     icono: '🎥',
     titulo: 'Mini-Tutoriales',
     desc: 'Micro-videos de 30 segundos: cómo sacar tu link público, subtítulos automáticos y más.',
-    imagen: `${BUCKET}/banners/sellos/sello-6.png`,
+    imagen: `${BUCKET_IMG}/banners/sellos/sello-6.png${CARD_CONTAIN_PARAMS}`,
     imagenModo: 'contain',
     badge: null,
     cta: 'VER TUTORIALES →',
@@ -268,7 +280,7 @@ const BLOQUES = [
     icono: '📜',
     titulo: 'Módulo 1 — Los 3 Pilares',
     desc: 'Tu documento base de marca personal. Descárgalo las veces que necesites, aunque ya lo hayas confirmado.',
-    imagen: `${BUCKET}/banners/sellos/sello-3.png`,
+    imagen: `${BUCKET_IMG}/banners/sellos/sello-3.png${CARD_CONTAIN_PARAMS}`,
     imagenModo: 'contain',
     badge: null,
     cta: 'DESCARGAR →',
@@ -401,8 +413,11 @@ export default function CaminoParticipanteArmeriaPage() {
         <div className="car-hero-frame">
           <img
             className="car-hero-img"
-            src={`${BUCKET}/banners/camino/camino-lobby-banner.webp`}
+            src={`${BUCKET_IMG}/banners/camino/camino-lobby-banner.webp${HERO_IMG_PARAMS}`}
             alt="Armería del Camino"
+            loading="eager"
+            decoding="async"
+            fetchpriority="high"
           />
           <div className="car-hero-content">
             <div className="car-eyebrow-row">
@@ -434,7 +449,7 @@ export default function CaminoParticipanteArmeriaPage() {
             >
               <div className="car-card-media">
                 <div className={`car-card-media-inner${b.imagenModo === 'contain' ? ' contain' : ''}`}>
-                  <img src={b.imagen} alt={b.titulo} />
+                  <img src={b.imagen} alt={b.titulo} loading="lazy" decoding="async" />
                 </div>
                 {b.badge && <span className="car-card-badge">{b.badge}</span>}
                 <div className="car-card-icon-float">{b.icono}</div>
