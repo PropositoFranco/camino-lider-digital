@@ -762,9 +762,11 @@
 
   <!-- ---- PROMPTER: pantalla de lectura ---- -->
   <div class="app-panel" id="promptPanel">
-    <!-- Live camera preview. Mirrored only via CSS for a natural "selfie"
-         feel while reading — the actual recording (below) captures the
-         raw, unmirrored stream, so the saved video is never flipped. -->
+    <!-- Video de la cámara, tal cual — sin canvas, sin rotación manual,
+         sin recorte inventado. Lo que se muestra aquí es EL MISMO stream
+         que se va a grabar abajo (no una copia, no una versión redibujada):
+         si se ve bien en pantalla, se guarda igual, punto. El espejo es
+         solo visual (CSS transform), nunca toca el stream real. -->
     <video class="camera-video" id="cameraVideo" autoplay playsinline muted></video>
 
     <div class="camera-alert" id="cameraAlert"></div>
@@ -1231,31 +1233,21 @@
     }
     setCameraStatus('Activando cámara…');
     try{
-      // No forzamos una resolución exacta (p. ej. 1080x1920): muchos
-      // celulares no tienen ese modo nativo y el navegador termina
-      // recortando agresivamente el stream para "simularlo", lo que se ve
-      // como un zoom enorme sobre la cara. Pedimos solo la proporción ideal
-      // (la de la pantalla real) y dejamos que la cámara elija su propia
-      // resolución nativa — así el encuadre queda igual que en la app de
-      // cámara normal del dispositivo.
-      const anchoPantalla = window.innerWidth || document.documentElement.clientWidth || 390;
-      const altoPantalla = window.innerHeight || document.documentElement.clientHeight || 844;
-      const dpr = window.devicePixelRatio || 1;
-      // Pedimos ancho y alto explícitos (no solo la proporción) y en ese
-      // orden — ancho menor que alto — para forzar vertical de verdad.
-      // Solo pedir "aspectRatio" es ambiguo: el navegador puede satisfacer
-      // la misma proporción entregando el sensor nativo en horizontal, que
-      // es justo lo que estaba pasando (se veía bien en pantalla por el
-      // object-fit:cover, pero el archivo grabado salía horizontal).
+      // Sin forzar nada: ni resolución, ni aspectRatio, ni ancho/alto.
+      // Pedimos únicamente cámara frontal, exactamente como lo hace
+      // cualquier app o sitio que abre la cámara del celular (WhatsApp Web,
+      // Google Meet, etc.) — dejamos que el navegador entregue el stream
+      // ya orientado como corresponde según cómo esté sostenido el
+      // celular, que es su comportamiento estándar.
       cameraStream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: 'user',
-          width: { ideal: Math.round(anchoPantalla * dpr) },
-          height: { ideal: Math.round(altoPantalla * dpr) },
-          aspectRatio: { ideal: anchoPantalla / altoPantalla }
-        },
+        video: { facingMode: 'user' },
         audio: true
       });
+      // El <video> muestra este mismo stream sin ninguna copia ni
+      // transformación de por medio, y es este MISMO stream (cameraStream)
+      // el que se pasa directo al MediaRecorder más abajo. Lo que se ve en
+      // pantalla y lo que se graba son, literalmente, la misma fuente — no
+      // hay forma de que difieran entre sí.
       cameraVideo.srcObject = cameraStream;
       promptPanel.classList.add('camera-active');
       cameraBtn.classList.add('on');
