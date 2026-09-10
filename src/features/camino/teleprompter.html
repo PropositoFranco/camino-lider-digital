@@ -1203,6 +1203,8 @@
   let recTimerInterval = null;
   let recSeconds = 0;
   let lastRecordingUrl = null;
+  let recStartTs = 0;        // Date.now() del último start/resume
+  let duracionGrabadaMs = 0; // milisegundos reales grabados (sin pausas)
 
   function setCameraStatus(label, mode){
     cameraStatusText.textContent = label;
@@ -1321,6 +1323,8 @@
     pauseBtn.title = 'Pausar grabación';
     recSeconds = 0;
     updateRecTimer();
+    recStartTs = Date.now();
+    duracionGrabadaMs = 0;
     recTimerInterval = setInterval(()=>{ recSeconds++; updateRecTimer(); }, 1000);
     setPlaying(true);
     setCameraStatus('Grabando…', 'recording');
@@ -1331,6 +1335,7 @@
     if(!paused){
       try{ mediaRecorder.pause(); }catch(e){}
       paused = true;
+      duracionGrabadaMs += Date.now() - recStartTs;
       clearInterval(recTimerInterval);
       pauseBtn.classList.add('paused');
       pauseBtn.textContent = '▶';
@@ -1340,6 +1345,7 @@
     } else {
       try{ mediaRecorder.resume(); }catch(e){}
       paused = false;
+      recStartTs = Date.now();
       recTimerInterval = setInterval(()=>{ recSeconds++; updateRecTimer(); }, 1000);
       pauseBtn.classList.remove('paused');
       pauseBtn.textContent = '⏸';
@@ -1353,6 +1359,7 @@
 
   function stopRecording(){
     if(!recording) return;
+    if(!paused) duracionGrabadaMs += Date.now() - recStartTs;
     recording = false;
     paused = false;
     recordBtn.classList.remove('recording');
@@ -1381,9 +1388,123 @@
     a.remove();
   }
 
+  /* ----------------------------------------------------------------------
+     Corrección de duración del .webm grabado.
+
+     Chrome graba el video en vivo, cuadro a cuadro, sin saber de antemano
+     cuánto va a durar en total — por eso deja, dentro del propio archivo,
+     la duración marcada como "desconocida". Casi todos los reproductores
+     de escritorio lo resuelven solos, pero muchas apps de Galería en
+     Android confían ciegamente en ese dato del encabezado: como dice
+     "desconocida", cortan la reproducción del VIDEO antes de tiempo,
+     mientras que el AUDIO (que se decodifica aparte) sigue sonando hasta
+     el final real. Eso es exactamente el "video se congela pero sigue el
+     audio" que estás viendo — no es un error nuestro de grabación, es un
+     dato faltante dentro del archivo que hay que rellenar.
+
+     La solución real: después de grabar, abrimos el archivo a nivel de
+     bytes, buscamos el bloque donde Chrome dejó esa duración marcada como
+     desconocida (formato EBML/Matroska, el mismo que usa .webm), y la
+     reescribimos con la duración real que sí medimos con precisión
+     mientras se grababa (recStartTs/duracionGrabadaMs, en milisegundos).
+     ---------------------------------------------------------------------- */
+  const EBML_ID_SEGMENTO       = 0x18538067;
+  const EBML_ID_INFO           = 0x1549A966;
+  const EBML_ID_DURACION       = 0x4489;
+  const EBML_ID_TIMECODESCALE  = 0x2AD7B1;
+
+  function leerIdEbml(vista, offset){
+    const primerByte = vista.getUint8(offset);
+    let largo = 1, mascara = 0x80;
+    while(largo <= 4 && !(primerByte & mascara)){ largo++; mascara >>= 1; }
+    if(largo > 4) throw new Error('ID EBML fuera de rango');
+    let valor = 0;
+    for(let i=0;i<largo;i++) valor = valor*256 + vista.getUint8(offset+i);
+    return { valor, largo };
+  }
+
+  function leerTamanoEbml(vista, offset){
+    const primerByte = vista.getUint8(offset);
+    let largo = 1, mascara = 0x80;
+    while(largo <= 8 && !(primerByte & mascara)){ largo++; mascara >>= 1; }
+    if(largo > 8) throw new Error('Tamaño EBML fuera de rango');
+    let todosUnos = (primerByte & (mascara-1)) === (mascara-1);
+    let valor = primerByte & (mascara-1);
+    for(let i=1;i<largo;i++){
+      const b = vista.getUint8(offset+i);
+      valor = valor*256 + b;
+      if(b !== 0xFF) todosUnos = false;
+    }
+    return { valor, largo, esDesconocido: todosUnos };
+  }
+
+  // Busca, entre offsetInicio y offsetFin, un elemento hijo directo con el
+  // id dado. Devuelve dónde empiezan y terminan sus datos, o null si no
+  // aparece — nunca inventa uno nuevo.
+  function buscarHijoEbml(vista, offsetInicio, offsetFin, idBuscado){
+    let pos = offsetInicio;
+    while(pos < offsetFin){
+      const id = leerIdEbml(vista, pos);
+      const despuesId = pos + id.largo;
+      const tam = leerTamanoEbml(vista, despuesId);
+      const inicioDatos = despuesId + tam.largo;
+      const finDatos = tam.esDesconocido ? offsetFin : (inicioDatos + tam.valor);
+      if(id.valor === idBuscado) return { inicioDatos, finDatos };
+      pos = finDatos;
+    }
+    return null;
+  }
+
+  // Devuelve un ArrayBuffer nuevo con la duración corregida, o null si el
+  // archivo no tiene la estructura esperada (en ese caso no se toca nada).
+  function corregirDuracionWebm(bufferOriginal, duracionMs){
+    const bytes = new Uint8Array(bufferOriginal.slice(0));
+    const vista = new DataView(bytes.buffer);
+    const total = bytes.length;
+
+    const segmento = buscarHijoEbml(vista, 0, total, EBML_ID_SEGMENTO);
+    if(!segmento) return null;
+
+    const info = buscarHijoEbml(vista, segmento.inicioDatos, segmento.finDatos, EBML_ID_INFO);
+    if(!info) return null;
+
+    let escalaDeTiempo = 1000000; // default EBML/Matroska/WebM (1 tick = 1ms)
+    const tc = buscarHijoEbml(vista, info.inicioDatos, info.finDatos, EBML_ID_TIMECODESCALE);
+    if(tc){
+      let v = 0;
+      for(let i=tc.inicioDatos;i<tc.finDatos;i++) v = v*256 + bytes[i];
+      if(v > 0) escalaDeTiempo = v;
+    }
+
+    const duracion = buscarHijoEbml(vista, info.inicioDatos, info.finDatos, EBML_ID_DURACION);
+    if(!duracion) return null; // Chrome no dejó el elemento: no inventamos uno
+
+    const largoValor = duracion.finDatos - duracion.inicioDatos;
+    const ticks = (duracionMs * 1e6) / escalaDeTiempo; // ms -> ns -> ticks
+    if(largoValor === 4) vista.setFloat32(duracion.inicioDatos, ticks, false);
+    else if(largoValor === 8) vista.setFloat64(duracion.inicioDatos, ticks, false);
+    else return null; // formato inesperado: no tocamos nada
+
+    return bytes.buffer;
+  }
+
   async function finalizeRecording(){
     const mimeType = (mediaRecorder && mediaRecorder.mimeType) || 'video/webm';
-    const blob = new Blob(recordedChunks, { type: mimeType });
+    let blob = new Blob(recordedChunks, { type: mimeType });
+
+    if(mimeType.indexOf('webm') !== -1 && duracionGrabadaMs > 0){
+      try{
+        const bufferOriginal = await blob.arrayBuffer();
+        const bufferCorregido = corregirDuracionWebm(bufferOriginal, duracionGrabadaMs);
+        if(bufferCorregido){
+          blob = new Blob([bufferCorregido], { type: mimeType });
+        }
+      }catch(err){
+        // Si la estructura del archivo no fue la esperada, seguimos con el
+        // video original tal cual — mejor un video que sí abre (aunque con
+        // este bug) que arriesgar a corromperlo con un parche a ciegas.
+      }
+    }
     if(lastRecordingUrl) URL.revokeObjectURL(lastRecordingUrl);
     lastRecordingUrl = URL.createObjectURL(blob);
     const ext = mimeType.indexOf('mp4') !== -1 ? 'mp4' : 'webm';
